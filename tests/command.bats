@@ -12,10 +12,10 @@ export JQ_STUB_DEBUG=/dev/tty
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/helloworld.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
 
   stub jq \
-    "--arg IMAGE hello-world:llamas .taskDefinition.containerDefinitions[0].image=\\\$IMAGE examples/helloworld.json : echo true"
+    "--arg IMAGE hello-world:llamas .taskDefinition.containerDefinitions[0].image=\\\$IMAGE examples/hello-world.json : echo true"
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions true : echo '{\"taskDefinition\":{\"revision\":1}}'" \
