@@ -29,23 +29,33 @@ steps:
 
 ### `cluster`
 
-The name of the ECS cluster. For example: `"my-cluster"`.
+The name of the ECS cluster.
+
+Example: `"my-cluster"`
 
 ### `service`
 
-The name of the ECS service. For example: `"my-service"`.
+The name of the ECS service.
+
+Example: `"my-service"`
 
 ### `task-definition`
 
-The file path to the ECS task definition JSON file. For example: `"ecs/task.json"`.
+The file path to the ECS task definition JSON file.
+
+Example: `"ecs/task.json"`
 
 ### `task-family`
 
-The name of the task family. For example: `"my-task"`.
+The name of the task family.
+
+Example: `"my-task"`
 
 ### `image`
 
-The Docker image to deploy. For example: `"012345.dkr.ecr.us-east-1.amazonaws.com/my-service:123"`.
+The Docker image to deploy.
+
+Example: `"012345.dkr.ecr.us-east-1.amazonaws.com/my-service:123"`
 
 ## AWS Roles
 
