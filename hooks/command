@@ -1,0 +1,47 @@
+#!/bin/bash
+set -euo pipefail
+
+cluster=${BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER?}
+task_family=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY?}
+service_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE?}
+image=${BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE?}
+task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION?}
+
+## This is the template definition of your containers
+container_definitions_json=$(jq --arg IMAGE "$image" \
+'.taskDefinition.containerDefinitions[0].image=$IMAGE' \
+"$task_definition"
+)
+
+echo "--- :ecs: Registering new task definition for ${task_family}"
+json_output=$(aws ecs register-task-definition \
+    --family "${task_family}" \
+    --container-definitions "$container_definitions_json")
+register_exit_code=$?
+
+if [[ $register_exit_code -ne 0 ]] ; then
+  echo "+++ ^^^"
+  echo "+++ Failed to register task defintion"
+  exit "$register_exit_code"
+fi
+
+task_revision=$(jq '.taskDefinition.revision' <<< "$json_output")
+echo "Registered ${task_family}:${task_revision}"
+
+echo "--- :ecs: Updating service for ${service_name}"
+aws ecs update-service \
+  --cluster "${cluster}" \
+  --service "${service_name}" \
+  --task-definition "${task_family}:${task_revision}"
+
+## Now we wait till it's stable
+echo "--- :ecs: Waiting for services to stabilize"
+aws ecs wait services-stable \
+  --cluster "${cluster}" \
+  --services "${service_name}"
+
+aws ecs describe-services \
+  --cluster "${cluster}" \
+  --service "${service_name}"
+
+echo "+++ :ecs: Service is up 🚀"
