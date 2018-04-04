@@ -1,6 +1,6 @@
 # ECS Deploy Buildkite Plugin ![Build status](https://badge.buildkite.com/67da940833c8744761259918c52d4a005e2b5599a173d1e131.svg)
 
-A [Buildkite](https://buildkite.com/) plugin for deploying to [Amazon ECS](https://aws.amazon.com/ecs/).
+A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) for deploying to [Amazon ECS](https://aws.amazon.com/ecs/).
 
 * Requires the aws cli tool be installed
 * Registers a new task definition based on a given JSON file ([`register-task-definition`](http://docs.aws.amazon.com/cli/latest/reference/ecs/register-task-definition.html]))
