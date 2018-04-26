@@ -1,7 +1,0 @@
-{
-  "name": "ecs-deploy",
-  "description": "Deploy to ECS",
-  "author": "@buildkite",
-  "public": true,
-  "requirements": ["aws","jq"]
-}

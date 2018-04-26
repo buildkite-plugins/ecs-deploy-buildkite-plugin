@@ -1,0 +1,24 @@
+name: ecs-deploy
+description: Deploy to ECS
+author: https://github.com/buildkite
+requirements:
+  - aws
+  - jq
+configuration:
+  properties:
+    cluster:
+      type: string
+    service:
+      type: string
+    task-definition:
+      type: string
+    task-family:
+      type: string
+    image:
+      type: string
+  required:
+    - cluster
+    - service
+    - task-definition
+    - task-family
+    - image
