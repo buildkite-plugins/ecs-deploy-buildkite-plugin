@@ -1,4 +1,4 @@
-name: ecs-deploy
+name: ECS Deploy
 description: Deploy to ECS
 author: https://github.com/buildkite
 requirements:
