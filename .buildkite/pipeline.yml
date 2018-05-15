@@ -7,7 +7,7 @@ steps:
   - label: ":shell: Lint"
     plugins:
       plugin-linter#v2.0.0:
-        name: ecs-deploy
+        id: ecs-deploy
 
   - label: ":shell: Shellcheck"
     plugins:
