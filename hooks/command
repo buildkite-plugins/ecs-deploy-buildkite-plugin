@@ -5,13 +5,20 @@ cluster=${BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER?}
 task_family=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY?}
 service_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE?}
 image=${BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE?}
-task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION?}
+task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION:-}
 
-## This is the template definition of your containers
+if [[ -z "$task_definition" ]] ; then
+  echo "--- :ecs: Looking up task definition for ${task_family}"
+  task_definition_json=$(aws ecs describe-task-definition \
+    --task-definition "${task_family}" \
+    --query "taskDefinition.{containerDefinitions:containerDefinitions}")
+else
+  task_definition_json="$(cat "$task_definition")"
+fi
+
 container_definitions_json=$(jq --arg IMAGE "$image" \
-'.taskDefinition.containerDefinitions[0].image=$IMAGE' \
-"$task_definition"
-)
+  '.taskDefinition.containerDefinitions[0].image=$IMAGE' <<< "$task_definition_json"
+  )
 
 echo "--- :ecs: Registering new task definition for ${task_family}"
 json_output=$(aws ecs register-task-definition \

@@ -39,9 +39,9 @@ The name of the ECS service.
 
 Example: `"my-service"`
 
-### `task-definition`
+### `task-definition` (optional)
 
-The file path to the ECS task definition JSON file.
+The file path to the ECS task definition JSON file. If this is omitted it will be looked up.
 
 Example: `"ecs/task.json"`
 
