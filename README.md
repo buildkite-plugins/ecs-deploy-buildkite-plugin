@@ -17,12 +17,12 @@ steps:
     concurrency_group: "my-service-deploy"
     concurrency: 1
     plugins:
-      ecs-deploy#v0.0.1:
-        cluster: "my-ecs-cluster"
-        service: "my-service"
-        task-definition: "examples/hello-world.json"
-        task-family: "hello-world"
-        image: "${ECR_REPOSITORY}/hello-world:${BUILDKITE_BUILD_NUMBER}"
+      - ecs-deploy#v0.0.1:
+          cluster: "my-ecs-cluster"
+          service: "my-service"
+          task-definition: "examples/hello-world.json"
+          task-family: "hello-world"
+          image: "${ECR_REPOSITORY}/hello-world:${BUILDKITE_BUILD_NUMBER}"
 ```
 
 ## Options
