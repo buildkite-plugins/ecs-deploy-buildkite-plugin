@@ -16,6 +16,8 @@ configuration:
       type: string
     image:
       type: string
+    desired-count:
+      type: string
   required:
     - cluster
     - service

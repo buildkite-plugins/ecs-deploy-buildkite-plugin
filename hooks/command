@@ -6,12 +6,30 @@ task_family=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY?}
 service_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE?}
 image=${BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE?}
 task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION?}
+desired_count=${BUILDKITE_PLUGIN_ECS_DEPLOY_DESIRED_COUNT:-"1"}
+
+function create_service() {
+    local cluster_name=$1
+    local task_definition=$2
+    local service_name=$3
+    local desired_count=$4
+
+    service_defined=$(aws ecs describe-services --cluster "$cluster_name" --service "$service_name" --query 'services[*].status' --output text |wc -l)
+    if [[ $service_defined -eq 0 ]]; then
+        echo "--- :ecs: Creating a Service $service_name in cluster $cluster_name"
+        aws ecs create-service --cluster "$cluster_name" --service "$service_name" --task-definition "$task_definition" --desired-count "$desired_count"
+    fi
+}
 
 ## This is the template definition of your containers
 container_definitions_json=$(jq --arg IMAGE "$image" \
 '.taskDefinition.containerDefinitions[0].image=$IMAGE' \
 "$task_definition"
 )
+
+echo "jq --arg IMAGE $image \
+'.taskDefinition.containerDefinitions[0].image=\$IMAGE' \
+$task_definition" > /tmp/foo
 
 echo "--- :ecs: Registering new task definition for ${task_family}"
 json_output=$(aws ecs register-task-definition \
@@ -27,6 +45,9 @@ fi
 
 task_revision=$(jq '.taskDefinition.revision' <<< "$json_output")
 echo "Registered ${task_family}:${task_revision}"
+
+# Create service if it doesn't already exist
+create_service "$cluster" "${task_family}:${task_revision}" "$service_name" "$desired_count"
 
 echo "--- :ecs: Updating service for ${service_name}"
 aws ecs update-service \
