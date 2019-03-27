@@ -15,7 +15,7 @@ load '/usr/local/lib/bats/load.bash'
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
 
   stub jq \
-    "--arg IMAGE hello-world:llamas '.taskDefinition.containerDefinitions[0].image=\$IMAGE' examples/helloworld.json : echo '{\"json\":true}'" \
+    "--arg IMAGE hello-world:llamas '.taskDefinition.containerDefinitions[0].image=\$IMAGE' examples/hello-world.json : echo '{\"json\":true}'" \
     "'.taskDefinition.revision' : echo 1"
 
   stub aws \
