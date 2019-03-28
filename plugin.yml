@@ -18,6 +18,8 @@ configuration:
       type: string
     desired-count:
       type: string
+    task-role-arn:
+      type: string
   required:
     - cluster
     - service
