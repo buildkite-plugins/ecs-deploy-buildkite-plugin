@@ -30,8 +30,8 @@ load '/usr/local/lib/bats/load.bash'
   assert_success
   assert_output --partial "Service is up 🚀"
 
-  #unstub aws
-  #unstub jq
+  unstub aws
+  unstub jq
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
@@ -62,8 +62,8 @@ load '/usr/local/lib/bats/load.bash'
   assert_success
   assert_output --partial "Service is up 🚀"
 
-  #unstub aws
-  #unstub jq
+  unstub aws
+  unstub jq
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
