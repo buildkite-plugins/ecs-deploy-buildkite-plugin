@@ -18,7 +18,7 @@ function create_service() {
     service_defined=$(aws ecs describe-services --cluster "$cluster_name" --service "$service_name" --query 'services[*].status' --output text |wc -l)
     if [[ $service_defined -eq 0 ]]; then
         echo "--- :ecs: Creating a Service $service_name in cluster $cluster_name"
-        aws ecs create-service --cluster "$cluster_name" --service "$service_name" --task-definition "$task_definition" --desired-count "$desired_count"
+        aws ecs create-service --cluster "$cluster_name" --service-name "$service_name" --task-definition "$task_definition" --desired-count "$desired_count"
     fi
 }
 

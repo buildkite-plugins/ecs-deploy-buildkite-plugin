@@ -52,7 +52,7 @@ load '/usr/local/lib/bats/load.bash'
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions '{\"json\":true}' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[*].status' --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service my-service --task-definition hello-world:1 --desired-count 1 : echo -n ''" \
+    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 : echo -n ''" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
