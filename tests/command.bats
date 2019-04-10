@@ -15,7 +15,7 @@ load '/usr/local/lib/bats/load.bash'
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
 
   stub jq \
-    "--arg IMAGE hello-world:llamas '.taskDefinition.containerDefinitions[0].image=\$IMAGE' examples/hello-world.json : echo '{\"json\":true}'" \
+    "--arg IMAGE hello-world:llamas '.[0].image=\$IMAGE' examples/hello-world.json : echo '{\"json\":true}'" \
     "'.taskDefinition.revision' : echo 1"
 
   stub aws \
@@ -46,7 +46,7 @@ load '/usr/local/lib/bats/load.bash'
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
 
   stub jq \
-    "--arg IMAGE hello-world:llamas '.taskDefinition.containerDefinitions[0].image=\$IMAGE' examples/hello-world.json : echo '{\"json\":true}'" \
+    "--arg IMAGE hello-world:llamas '.[0].image=\$IMAGE' examples/hello-world.json : echo '{\"json\":true}'" \
     "'.taskDefinition.revision' : echo 1"
 
   stub aws \
@@ -79,7 +79,7 @@ load '/usr/local/lib/bats/load.bash'
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN=arn:aws:iam::012345678910:role/world
 
   stub jq \
-    "--arg IMAGE hello-world:llamas '.taskDefinition.containerDefinitions[0].image=\$IMAGE' examples/hello-world.json : echo '{\"json\":true}'" \
+    "--arg IMAGE hello-world:llamas '.[0].image=\$IMAGE' examples/hello-world.json : echo '{\"json\":true}'" \
     "'.taskDefinition.revision' : echo 1"
 
   stub aws \
