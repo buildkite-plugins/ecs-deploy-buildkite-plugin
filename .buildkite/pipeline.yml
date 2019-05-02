@@ -1,7 +1,7 @@
 steps:
   - label: ":docker: :hammer:"
     plugins:
-      docker-compose#v3.0.2:
+      docker-compose#v3.0.3:
         run: tests
 
   - label: ":shell: Lint"
