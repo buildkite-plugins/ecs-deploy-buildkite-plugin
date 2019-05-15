@@ -33,7 +33,7 @@ function generate_target_group_arguments() {
     local target_port=$3
     local target_group_arguments=""
     if [[ -n $target_group ]] && [[ -n $target_container ]] && [[ -n $target_port ]]; then
-      target_group_arguments="--load-balancers 'targetGroupArn=${target_group},containerName=${target_container},containerPort=${target_port}'"
+      target_group_arguments="--load-balancers targetGroupArn=${target_group},containerName=${target_container},containerPort=${target_port}"
     fi
     echo "$target_group_arguments"
 }
