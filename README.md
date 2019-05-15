@@ -57,6 +57,20 @@ The Docker image to deploy.
 
 Example: `"012345.dkr.ecr.us-east-1.amazonaws.com/my-service:123"`
 
+### `target-group`
+
+The Target Group ARN to map the service to.
+
+Example: `"arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc"`
+
+### `target-container-name`
+
+The Container Name to forward ALB requests to
+
+### `target-container-port`
+
+The Container Port to forward requests to
+
 ## AWS Roles
 
 Requires the following AWS roles to be granted to the agent running this step:
