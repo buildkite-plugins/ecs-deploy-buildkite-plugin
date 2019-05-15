@@ -17,12 +17,12 @@ load '/usr/local/lib/bats/load.bash'
   stub jq \
     "--arg IMAGE hello-world:llamas '.[0].image=\$IMAGE' examples/hello-world.json : echo '{\"json\":true}'" \
     "'.taskDefinition.revision' : echo 1" \
-    "-r .loadBalancers[0] : echo null"
+    "-r '.[0].loadBalancers[0]' : echo null"
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions '{\"json\":true}' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[*].status' --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query services[0].{loadBalancers:loadBalancers} : echo 'null'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo '1'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
@@ -52,13 +52,13 @@ load '/usr/local/lib/bats/load.bash'
   stub jq \
     "--arg IMAGE hello-world:llamas '.[0].image=\$IMAGE' examples/hello-world.json : echo '{\"json\":true}'" \
     "'.taskDefinition.revision' : echo 1" \
-    "-r .loadBalancers[0] : echo null"
+    "-r '.[0].loadBalancers[0]' : echo null"
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions '{\"json\":true}' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[*].status' --output text : echo -n ''" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
     "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 : echo -n ''" \
-    "ecs describe-services --cluster my-cluster --services my-service --query services[0].{loadBalancers:loadBalancers} : echo 'null'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
@@ -89,12 +89,12 @@ load '/usr/local/lib/bats/load.bash'
   stub jq \
     "--arg IMAGE hello-world:llamas '.[0].image=\$IMAGE' examples/hello-world.json : echo '{\"json\":true}'" \
     "'.taskDefinition.revision' : echo 1" \
-    "-r .loadBalancers[0] : echo null"
+    "-r '.[0].loadBalancers[0]' : echo null"
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions '{\"json\":true}' --task-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[*].status' --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query services[0].{loadBalancers:loadBalancers} : echo 'null'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo '1'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
@@ -127,15 +127,15 @@ load '/usr/local/lib/bats/load.bash'
   stub jq \
     "--arg IMAGE hello-world:llamas '.[0].image=\$IMAGE' examples/hello-world.json : echo '{\"json\":true}'" \
     "'.taskDefinition.revision' : echo 1" \
-    "-r .loadBalancers[0] : echo alb" \
+    "-r '.[0].loadBalancers[0]' : echo alb" \
     "-r .containerName : echo nginx" \
     "-r .containerPort : echo 80"
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions '{\"json\":true}' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[*].status' --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --load-balancers \'targetGroupArn=arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc,containerName=nginx,containerPort=80\' : echo -n ''" \
-    "ecs describe-services --cluster my-cluster --services my-service --query services[0].{loadBalancers:loadBalancers} : echo '[{\"loadBalancerName\": \"alb\",\"containerName\": \"nginx\",\"containerPort\": 80}]'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
+    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --load-balancers targetGroupArn=arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc,containerName=nginx,containerPort=80 : echo -n ''" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo '[{\"loadBalancerName\": \"alb\",\"containerName\": \"nginx\",\"containerPort\": 80}]'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
