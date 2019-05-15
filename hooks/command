@@ -77,13 +77,10 @@ lb_config=$(aws ecs describe-services --cluster "$cluster" --services "$service_
 error="+++ Cannot update a service to add a load balancer. First delete the service and then run again, or rename the service to force a new one to be created"
 
 # No easy way to tell if the target group has changed, since describe-services only returns the load balancer name
-if [[ "$lb_config" == "null" ]] && [[ -z $target_group ]]; then
+if [[ "$lb_config" == "null" ]] && [[ -n $target_group ]]; then
   echo "$error"
   exit 1
-elif [[ "$lb_config" == "null" ]]; then
-  # do nothing
-  true
-elif [[ $(echo "$lb_config" |jq -r '.containerName') != $target_container ]] || [[ $(echo "$lb_config" |jq -r '.containerPort') -ne $target_port ]]; then
+elif [[ $(echo "$lb_config" |jq -r '.containerName') != "$target_container" ]] || [[ $(echo "$lb_config" |jq -r '.containerPort') -ne $target_port ]]; then
   echo "$error"
   exit 1
 fi
