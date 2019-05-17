@@ -69,7 +69,7 @@ The Container Name to forward ALB requests to.
 
 ### `target-container-port`
 
-The Container Port to forward requests to
+The Container Port to forward requests to.
 
 ## AWS Roles
 
