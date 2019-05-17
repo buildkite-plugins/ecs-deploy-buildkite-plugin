@@ -65,7 +65,7 @@ Example: `"arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e
 
 ### `target-container-name`
 
-The Container Name to forward ALB requests to
+The Container Name to forward ALB requests to.
 
 ### `target-container-port`
 
