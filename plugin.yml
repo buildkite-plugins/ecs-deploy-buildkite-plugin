@@ -20,6 +20,12 @@ configuration:
       type: string
     task-role-arn:
       type: string
+    target-group:
+      type: string
+    target-container-name:
+      type: string
+    target-container-port:
+      type: integer
   required:
     - cluster
     - service
