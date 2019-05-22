@@ -129,7 +129,8 @@ load '/usr/local/lib/bats/load.bash'
     "'.taskDefinition.revision' : echo 1" \
     "-r '.[0].loadBalancers[0]' : echo alb" \
     "-r .containerName : echo nginx" \
-    "-r .containerPort : echo 80"
+    "-r .containerPort : echo 80" \
+    "-r .targetGroupArn : echo 'arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc'"
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions '{\"json\":true}' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
@@ -150,4 +151,50 @@ load '/usr/local/lib/bats/load.bash'
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT
+}
+
+@test "Run a deploy with ELBv1" {
+  export BUILDKITE_BUILD_NUMBER=1
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME=nginx-elb
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME=nginx
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT=80
+
+  stub jq \
+    "--arg IMAGE hello-world:llamas '.[0].image=\$IMAGE' examples/hello-world.json : echo '{\"json\":true}'" \
+    "'.taskDefinition.revision' : echo 1" \
+    "-r '.[0].loadBalancers[0]' : echo alb" \
+    "-r .containerName : echo nginx" \
+    "-r .containerPort : echo 80" \
+    "-r .loadBalancerName : echo nginx-elb"
+
+  stub aws \
+    "ecs register-task-definition --family hello-world --container-definitions '{\"json\":true}' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
+    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --load-balancers loadBalancerName=nginx-elb,containerName=nginx,containerPort=80 : echo -n ''" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo '[{\"loadBalancerName\": \"alb\",\"containerName\": \"nginx\",\"containerPort\": 80}]'" \
+    "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
+    "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
+    "ecs describe-services --cluster my-cluster --service my-service : echo ok"
+
+  run "$PWD/hooks/command"
+
+  assert_success
+  assert_output --partial "Service is up 🚀"
+
+  unstub aws
+  unstub jq
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME
 }
