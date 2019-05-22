@@ -60,10 +60,6 @@ container_definitions_json=$(jq --arg IMAGE "$image" \
 "$task_definition"
 )
 
-echo "jq --arg IMAGE $image \
-'.taskDefinition.containerDefinitions[0].image=\$IMAGE' \
-$task_definition" > /tmp/foo
-
 echo "--- :ecs: Registering new task definition for ${task_family}"
 register_command="aws ecs register-task-definition \
     --family ${task_family} \
