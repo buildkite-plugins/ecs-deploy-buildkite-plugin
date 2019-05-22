@@ -27,7 +27,10 @@ function prefix_read_list() {
 cluster=${BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER?}
 task_family=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY?}
 service_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE?}
-images=($(plugin_read_list IMAGE))
+images=()
+while read -r line ; do
+  [[ -n "$line" ]] && images+=("$line")
+done <<< "$(plugin_read_list IMAGE)"
 task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION?}
 desired_count=${BUILDKITE_PLUGIN_ECS_DEPLOY_DESIRED_COUNT:-"1"}
 task_role_arn=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN:-""}
