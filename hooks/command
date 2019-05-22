@@ -1,10 +1,33 @@
 #!/bin/bash
 set -euo pipefail
 
+# Reads either a value or a list from plugin config
+function plugin_read_list() {
+  prefix_read_list "BUILDKITE_PLUGIN_ECS_DEPLOY_$1"
+}
+
+# Reads either a value or a list from the given env prefix
+function prefix_read_list() {
+  local prefix="$1"
+  local parameter="${prefix}_0"
+
+  if [[ -n "${!parameter:-}" ]]; then
+    local i=0
+    local parameter="${prefix}_${i}"
+    while [[ -n "${!parameter:-}" ]]; do
+      echo "${!parameter}"
+      i=$((i+1))
+      parameter="${prefix}_${i}"
+    done
+  elif [[ -n "${!prefix:-}" ]]; then
+    echo "${!prefix}"
+  fi
+}
+
 cluster=${BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER?}
 task_family=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY?}
 service_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE?}
-image=${BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE?}
+images=($(plugin_read_list IMAGE))
 task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION?}
 desired_count=${BUILDKITE_PLUGIN_ECS_DEPLOY_DESIRED_COUNT:-"1"}
 task_role_arn=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN:-""}
@@ -41,10 +64,14 @@ function generate_target_group_arguments() {
 }
 
 ## This is the template definition of your containers
-container_definitions_json=$(jq --arg IMAGE "$image" \
-'.[0].image=$IMAGE' \
-"$task_definition"
-)
+image_idx=0
+container_definitions_json=$(cat ${task_definition})
+for image in "${images[@]}"; do
+  container_definitions_json=$(echo $container_definitions_json | jq --arg IMAGE "$image" \
+  ".[${image_idx}].image=\$IMAGE"
+  )
+  image_idx=$((image_idx+1))
+done
 
 echo "jq --arg IMAGE $image \
 '.taskDefinition.containerDefinitions[0].image=\$IMAGE' \
