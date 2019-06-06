@@ -45,7 +45,8 @@ function generate_target_group_arguments() {
         load_balancer_ref="loadBalancerName=${load_balancer_name}"
       else
         echo "+++ ^^^"
-        echo "+++ You must specify either `target-group` or `load-balancer-name`"
+        # shellcheck disable=SC2016
+        echo '+++ You must specify either `target-group` or `load-balancer-name`'
         exit 1
       fi
 
@@ -88,9 +89,11 @@ error="+++ ^^^
 +++ Cannot update a service to add/remove a load balancer. First delete the service and then run again, or rename the service to force a new one to be created"
 
 # No easy way to tell if the target group has changed, since describe-services only returns the load balancer name
-if [[ "$lb_config" == "null" ]] && [ -n "$target_group" -o -n "$load_balancer_name" ]; then
-  echo "$error"
-  exit 1
+if [[ "$lb_config" == "null" ]]; then
+  if [[ -n "$target_group" ]] || [[ -n "$load_balancer_name" ]]; then
+    echo "$error"
+    exit 1
+  fi
 fi
 
 if [[ "$lb_config" == "null" ]]; then
