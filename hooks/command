@@ -48,9 +48,11 @@ function create_service() {
     local target_group_arguments
     target_group_arguments=$(generate_target_group_arguments "$5" "$6" "$7")
 
+    # shellcheck disable=SC2016
     service_defined=$(aws ecs describe-services --cluster "$cluster_name" --service "$service_name" --query 'services[?status==`ACTIVE`].status' --output text |wc -l)
     if [[ $service_defined -eq 0 ]]; then
         echo "--- :ecs: Creating a Service $service_name in cluster $cluster_name"
+        # shellcheck disable=SC2086
         aws ecs create-service --cluster "$cluster_name" --service-name "$service_name" --task-definition "$task_definition" --desired-count "$desired_count" $target_group_arguments
     fi
 }
@@ -68,9 +70,9 @@ function generate_target_group_arguments() {
 
 ## This is the template definition of your containers
 image_idx=0
-container_definitions_json=$(cat ${task_definition})
+container_definitions_json=$(cat "${task_definition}")
 for image in "${images[@]}"; do
-  container_definitions_json=$(echo $container_definitions_json | jq --arg IMAGE "$image" \
+  container_definitions_json=$(echo "$container_definitions_json" | jq --arg IMAGE "$image" \
   ".[${image_idx}].image=\$IMAGE"
   )
   image_idx=$((image_idx+1))
@@ -103,6 +105,7 @@ echo "Registered ${task_family}:${task_revision}"
 # Create service if it doesn't already exist
 create_service "$cluster" "${task_family}:${task_revision}" "$service_name" "$desired_count" "$target_group" "$target_container" "$target_port"
 
+# shellcheck disable=SC2016
 lb_config=$(aws ecs describe-services --cluster "$cluster" --services "$service_name" --query 'services[?status==`ACTIVE`]' |jq -r '.[0].loadBalancers[0]')
 error="+++ Cannot update a service to add a load balancer. First delete the service and then run again, or rename the service to force a new one to be created"
 
