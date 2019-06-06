@@ -57,25 +57,42 @@ The Docker image to deploy.
 
 Example: `"012345.dkr.ecr.us-east-1.amazonaws.com/my-service:123"`
 
-### `target-group`
+### `task-role-arn` (optional)
+
+An IAM ECS Task Role to assign to tasks.
+Requires the `iam:PassRole` permission for the ARN specified.
+
+### `target-group` (optional)
 
 The Target Group ARN to map the service to.
 
 Example: `"arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc"`
 
-### `target-container-name`
+### `target-container-name` (optional)
 
 The Container Name to forward ALB requests to.
 
-### `target-container-port`
+### `target-container-port` (optional)
 
 The Container Port to forward requests to.
 
 ## AWS Roles
 
-Requires the following AWS roles to be granted to the agent running this step:
+At a minimum this plugin requires the following AWS permissions to be granted to the agent running this step:
 
-* TODO
+```
+Policy:
+  Statement:
+  - Action:
+    - ecr:DescribeImages
+    - ecs:DescribeServices
+    - ecs:RegisterTaskDefinition
+    - ecs:UpdateService
+    Effect: Allow
+    Resource: '*'
+```
+
+This plugin will create the ECS Service if it does not already exist, which additionally requires the `ecs:CreateService` permission.
 
 ## Developing
 
