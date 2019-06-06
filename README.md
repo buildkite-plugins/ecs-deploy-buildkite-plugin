@@ -71,6 +71,12 @@ The Container Name to forward ALB requests to.
 
 The Container Port to forward requests to.
 
+### `execution-role` (optional)
+
+The Execution Role ARN used by ECS to pull container images and secrets.
+
+Example: `"arn:aws:iam::012345678910:role/execution-role"`
+
 ## AWS Roles
 
 Requires the following AWS roles to be granted to the agent running this step:

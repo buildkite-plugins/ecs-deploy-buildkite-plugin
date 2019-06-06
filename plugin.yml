@@ -26,6 +26,8 @@ configuration:
       type: string
     target-container-port:
       type: integer
+    execution-role:
+      type: string
   required:
     - cluster
     - service

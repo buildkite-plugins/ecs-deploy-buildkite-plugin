@@ -13,6 +13,7 @@ target_group=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP:-""}
 target_group=$(eval "echo $target_group")
 target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
+execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
 
 function create_service() {
     local cluster_name=$1
@@ -58,6 +59,11 @@ register_command="aws ecs register-task-definition \
 if [[ -n "${task_role_arn}" ]]; then
     register_command+=" --task-role-arn ${task_role_arn}"
 fi
+
+if [[ -n "${execution_role}" ]]; then
+    register_command+=" --execution-role-arn ${execution_role}"
+fi
+
 json_output=$(eval "$register_command")
 register_exit_code=$?
 
