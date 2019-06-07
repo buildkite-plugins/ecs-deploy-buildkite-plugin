@@ -7,8 +7,6 @@ A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) for deploying 
 * Updates the ECS service to use the new task definition ([`update-service`](http://docs.aws.amazon.com/cli/latest/reference/ecs/update-service.html))
 * Waits for the service to stabilize ([`wait services-stable`](http://docs.aws.amazon.com/cli/latest/reference/ecs/wait/services-stable.html))
 
-_The ECS service must have been created before using this plugin._
-
 ## Example
 
 ```yml
