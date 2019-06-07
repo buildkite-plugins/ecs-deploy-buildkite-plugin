@@ -1,4 +1,4 @@
-# ECS Deploy Buildkite Plugin (Alpha) ![Build status](https://badge.buildkite.com/67da940833c8744761259918c52d4a005e2b5599a173d1e131.svg?branch=master)
+# ECS Deploy Buildkite Plugin ![Build status](https://badge.buildkite.com/67da940833c8744761259918c52d4a005e2b5599a173d1e131.svg?branch=master)
 
 A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) for deploying to [Amazon ECS](https://aws.amazon.com/ecs/).
 
