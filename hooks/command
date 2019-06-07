@@ -35,10 +35,13 @@ task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION?}
 desired_count=${BUILDKITE_PLUGIN_ECS_DEPLOY_DESIRED_COUNT:-"1"}
 task_role_arn=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN:-""}
 target_group=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP:-""}
-# Resolve any runtime environment variables it has
-target_group=$(eval "echo $target_group")
+load_balancer_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME:-""}
 target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
+
+# Resolve any runtime environment variables it has
+target_group=$(eval "echo $target_group")
+load_balancer_name=$(eval "echo $load_balancer_name")
 
 function create_service() {
     local cluster_name=$1
@@ -62,8 +65,20 @@ function generate_target_group_arguments() {
     local target_container=$2
     local target_port=$3
     local target_group_arguments=""
-    if [[ -n $target_group ]] && [[ -n $target_container ]] && [[ -n $target_port ]]; then
-      target_group_arguments="--load-balancers targetGroupArn=${target_group},containerName=${target_container},containerPort=${target_port}"
+    if [[ -n $target_container ]] && [[ -n $target_port ]]; then
+      local load_balancer_ref=""
+      if [[ -n $target_group ]]; then
+        load_balancer_ref="targetGroupArn=${target_group}"
+      elif [[ -n $load_balancer_name ]]; then
+        load_balancer_ref="loadBalancerName=${load_balancer_name}"
+      else
+        echo "+++ ^^^"
+        # shellcheck disable=SC2016
+        echo '+++ You must specify either `target-group` or `load-balancer-name`'
+        exit 1
+      fi
+
+      target_group_arguments="--load-balancers ${load_balancer_ref},containerName=${target_container},containerPort=${target_port}"
     fi
     echo "$target_group_arguments"
 }
@@ -77,10 +92,6 @@ for image in "${images[@]}"; do
   )
   image_idx=$((image_idx+1))
 done
-
-echo "jq --arg IMAGE $image \
-'.taskDefinition.containerDefinitions[0].image=\$IMAGE' \
-$task_definition" > /tmp/foo
 
 echo "--- :ecs: Registering new task definition for ${task_family}"
 register_command="aws ecs register-task-definition \
@@ -107,18 +118,27 @@ create_service "$cluster" "${task_family}:${task_revision}" "$service_name" "$de
 
 # shellcheck disable=SC2016
 lb_config=$(aws ecs describe-services --cluster "$cluster" --services "$service_name" --query 'services[?status==`ACTIVE`]' |jq -r '.[0].loadBalancers[0]')
-error="+++ Cannot update a service to add a load balancer. First delete the service and then run again, or rename the service to force a new one to be created"
+error="+++ ^^^
++++ Cannot update a service to add/remove a load balancer. First delete the service and then run again, or rename the service to force a new one to be created"
 
 # No easy way to tell if the target group has changed, since describe-services only returns the load balancer name
-if [[ "$lb_config" == "null" ]] && [[ -n $target_group ]]; then
-  echo "$error"
-  exit 1
+if [[ "$lb_config" == "null" ]]; then
+  if [[ -n "$target_group" ]] || [[ -n "$load_balancer_name" ]]; then
+    echo "$error"
+    exit 1
+  fi
 fi
 
 if [[ "$lb_config" == "null" ]]; then
   # noop
   true
 elif [[ $(echo "$lb_config" |jq -r '.containerName') != "$target_container" ]] || [[ $(echo "$lb_config" |jq -r '.containerPort') -ne $target_port ]]; then
+  echo "$error"
+  exit 1
+elif [[ -n "$target_group" ]] && [[ $(echo "$lb_config" |jq -r '.targetGroupArn') != "$target_group" ]]; then
+  echo "$error"
+  exit 1
+elif [[ -n "$load_balancer_name" ]] && [[ $(echo "$lb_config" |jq -r '.loadBalancerName') != "$load_balancer_name" ]]; then
   echo "$error"
   exit 1
 fi
