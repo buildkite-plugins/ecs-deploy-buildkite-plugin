@@ -78,7 +78,7 @@ The Container Port to forward requests to.
 
 At a minimum this plugin requires the following AWS permissions to be granted to the agent running this step:
 
-```
+```yml
 Policy:
   Statement:
   - Action:
