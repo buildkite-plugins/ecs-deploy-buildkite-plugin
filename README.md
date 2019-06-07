@@ -7,8 +7,6 @@ A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) for deploying 
 * Updates the ECS service to use the new task definition ([`update-service`](http://docs.aws.amazon.com/cli/latest/reference/ecs/update-service.html))
 * Waits for the service to stabilize ([`wait services-stable`](http://docs.aws.amazon.com/cli/latest/reference/ecs/wait/services-stable.html))
 
-_The ECS service must have been created before using this plugin._
-
 ## Example
 
 ```yml
@@ -64,25 +62,42 @@ image:
   - "012345.dkr.ecr.us-east-1.amazonaws.com/nginx:123"
 ```
 
-### `target-group`
+### `task-role-arn` (optional)
+
+An IAM ECS Task Role to assign to tasks.
+Requires the `iam:PassRole` permission for the ARN specified.
+
+### `target-group` (optional)
 
 The Target Group ARN to map the service to.
 
 Example: `"arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc"`
 
-### `target-container-name`
+### `target-container-name` (optional)
 
 The Container Name to forward ALB requests to.
 
-### `target-container-port`
+### `target-container-port` (optional)
 
 The Container Port to forward requests to.
 
 ## AWS Roles
 
-Requires the following AWS roles to be granted to the agent running this step:
+At a minimum this plugin requires the following AWS permissions to be granted to the agent running this step:
 
-* TODO
+```yml
+Policy:
+  Statement:
+  - Action:
+    - ecr:DescribeImages
+    - ecs:DescribeServices
+    - ecs:RegisterTaskDefinition
+    - ecs:UpdateService
+    Effect: Allow
+    Resource: '*'
+```
+
+This plugin will create the ECS Service if it does not already exist, which additionally requires the `ecs:CreateService` permission.
 
 ## Developing
 
