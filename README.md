@@ -53,9 +53,16 @@ Example: `"my-task"`
 
 ### `image`
 
-The Docker image to deploy.
+The Docker image to deploy. This can be an array to substitute multiple images in a single container definition.
 
-Example: `"012345.dkr.ecr.us-east-1.amazonaws.com/my-service:123"`
+Examples:
+`"012345.dkr.ecr.us-east-1.amazonaws.com/my-service:123"`
+
+```yaml
+image:
+  - "012345.dkr.ecr.us-east-1.amazonaws.com/my-service:123"
+  - "012345.dkr.ecr.us-east-1.amazonaws.com/nginx:123"
+```
 
 ### `target-group`
 
