@@ -151,3 +151,39 @@ load '/usr/local/lib/bats/load.bash'
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
 }
+
+@test "Run a deploy with execution role" {
+  export BUILDKITE_BUILD_NUMBER=1
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE=arn:aws:iam::012345678910:role/world
+
+  stub jq \
+    "--arg IMAGE hello-world:llamas '.[0].image=\$IMAGE' examples/hello-world.json : echo '{\"json\":true}'" \
+    "'.taskDefinition.revision' : echo 1" \
+    "-r '.[0].loadBalancers[0]' : echo null"
+
+  stub aws \
+    "ecs register-task-definition --family hello-world --container-definitions '{\"json\":true}' --execution-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo '1'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
+    "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
+    "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
+    "ecs describe-services --cluster my-cluster --service my-service : echo ok"
+
+  run "$PWD/hooks/command"
+
+  assert_success
+  assert_output --partial "Service is up 🚀"
+
+  unstub aws
+  unstub jq
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE
+}
