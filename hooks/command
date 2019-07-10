@@ -44,6 +44,7 @@ target_group=$(eval "echo $target_group")
 load_balancer_name=$(eval "echo $load_balancer_name")
 
 deployment_config=${BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION:-"100/200"}
+# shellcheck disable=SC2206
 min_max_percent=(${deployment_config//\// })
 min_deploy_perc=${min_max_percent[0]}
 max_deploy_perc=${min_max_percent[1]}
