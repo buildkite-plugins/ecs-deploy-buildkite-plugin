@@ -89,6 +89,12 @@ Example: `"arn:aws:iam::012345678910:role/execution-role"`
 
 Requires the `iam:PassRole` permission for the execution role.
 
+### `deployment-configuration` (optional)
+
+The minimum and maximum percentage of tasks that should be maintained during a deployment. Defaults to `100/200`
+
+Example: `"0/100"`
+
 ## AWS Roles
 
 At a minimum this plugin requires the following AWS permissions to be granted to the agent running this step:
