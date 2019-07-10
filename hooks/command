@@ -104,9 +104,10 @@ aws ecs wait services-stable \
   --services "${service_name}" || deploy_exitcode=$?
 
 
-services_events=$(aws ecs describe-services \
+service_events=$(aws ecs describe-services \
   --cluster "${cluster}" \
-  --service "${service_name}")
+  --service "${service_name}" \
+  --query 'services[].events' --output text)
 
 if [[ $deploy_exitcode -eq 0 ]]; then
   echo "--- :ecs: Service is up 🚀"
