@@ -28,6 +28,8 @@ configuration:
       type: string
     target-container-port:
       type: integer
+    deployment-config:
+      type: string
   required:
     - cluster
     - service
