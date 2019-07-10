@@ -81,6 +81,12 @@ The Container Name to forward ALB requests to.
 
 The Container Port to forward requests to.
 
+### `deployment-configuration` (optional)
+
+The minimum and maximum percentage of tasks that should be maintained during a deployment. Defaults to `100/200`
+
+Example: `"0/100"`
+
 ## AWS Roles
 
 At a minimum this plugin requires the following AWS permissions to be granted to the agent running this step:
