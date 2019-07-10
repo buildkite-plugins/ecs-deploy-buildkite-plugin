@@ -245,7 +245,7 @@ load '/usr/local/lib/bats/load.bash'
   export BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE=arn:aws:iam::012345678910:role/world
 
   stub jq \
-    "--arg IMAGE hello-world:llamas '.[0].image=\$IMAGE' examples/hello-world.json : echo '{\"json\":true}'" \
+    "--arg IMAGE hello-world:llamas '.[0].image=\$IMAGE' : echo '{\"json\":true}'" \
     "'.taskDefinition.revision' : echo 1" \
     "-r '.[0].loadBalancers[0]' : echo null"
 
