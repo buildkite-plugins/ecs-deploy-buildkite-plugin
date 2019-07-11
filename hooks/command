@@ -169,12 +169,22 @@ aws ecs update-service \
 
 ## Now we wait till it's stable
 echo "--- :ecs: Waiting for services to stabilize"
+deploy_exitcode=0
 aws ecs wait services-stable \
   --cluster "${cluster}" \
-  --services "${service_name}"
+  --services "${service_name}" || deploy_exitcode=$?
 
-aws ecs describe-services \
+
+service_events=$(aws ecs describe-services \
   --cluster "${cluster}" \
-  --service "${service_name}"
+  --service "${service_name}" \
+  --query 'services[].events' --output text)
 
-echo "+++ :ecs: Service is up 🚀"
+if [[ $deploy_exitcode -eq 0 ]]; then
+  echo "--- :ecs: Service is up 🚀"
+  echo "$service_events"
+else
+  echo "+++ :ecs: Service failed to deploy ❌"
+  echo "$service_events"
+  exit $deploy_exitcode
+fi
