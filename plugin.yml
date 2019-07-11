@@ -30,6 +30,8 @@ configuration:
       type: integer
     execution-role:
       type: string
+    deployment-config:
+      type: string
   required:
     - cluster
     - service
