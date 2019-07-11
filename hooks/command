@@ -182,9 +182,9 @@ service_events=$(aws ecs describe-services \
 
 if [[ $deploy_exitcode -eq 0 ]]; then
   echo "--- :ecs: Service is up 🚀"
-  echo $service_events
+  echo "$service_events"
 else
   echo "+++ :ecs: Service failed to deploy ❌"
-  echo $service_events
+  echo "$service_events"
   exit $deploy_exitcode
 fi
