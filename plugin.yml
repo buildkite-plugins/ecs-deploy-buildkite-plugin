@@ -28,6 +28,8 @@ configuration:
       type: string
     target-container-port:
       type: integer
+    execution-role:
+      type: string
     deployment-config:
       type: string
   required:
