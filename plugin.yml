@@ -15,17 +15,23 @@ configuration:
     task-family:
       type: string
     image:
-      type: string
+      type: [ string, array ]
     desired-count:
       type: string
     task-role-arn:
       type: string
     target-group:
       type: string
+    load-balanccer-name:
+      type: string
     target-container-name:
       type: string
     target-container-port:
       type: integer
+    execution-role:
+      type: string
+    deployment-config:
+      type: string
   required:
     - cluster
     - service
