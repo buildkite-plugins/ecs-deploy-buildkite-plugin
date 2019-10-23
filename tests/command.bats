@@ -259,3 +259,22 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION
 }
+
+@test "Run a deploy when the container definition is incorrect" {
+  export BUILDKITE_BUILD_NUMBER=1
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=tests/incorrect-container-definition.json
+
+  run "$PWD/hooks/command"
+  assert_failure
+  assert_output --partial 'JSON definition should be in the format of [{"image": "..."}]'
+
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
+  unset BUILDKITE_BUILD_NUMBER
+}

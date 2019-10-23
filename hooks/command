@@ -55,6 +55,13 @@ min_max_percent=(${deployment_config//\// })
 min_deploy_perc=${min_max_percent[0]}
 max_deploy_perc=${min_max_percent[1]}
 
+if [[ $(jq '. | keys |first' $task_definition) != "0" ]]; then
+    echo "^^^"
+    echo "Invalid Task Definition"
+    echo 'JSON definition should be in the format of [{"image": "..."}]'
+    exit 1
+fi
+
 function create_service() {
     local cluster_name=$1
     local task_definition=$2
