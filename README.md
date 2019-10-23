@@ -95,7 +95,7 @@ The minimum and maximum percentage of tasks that should be maintained during a d
 
 Example: `"0/100"`
 
-### `region` (option)
+### `region` (optional)
 
 The region we deploy the ECS Service to.
 
