@@ -55,6 +55,13 @@ min_max_percent=(${deployment_config//\// })
 min_deploy_perc=${min_max_percent[0]}
 max_deploy_perc=${min_max_percent[1]}
 
+if [[ $(jq '. | keys |first' $task_definition) != "0" ]]; then
+    echo "^^^"
+    echo "Invalid Task Definition"
+    echo 'JSON definition should be in the format of [{"image": "..."}]'
+    exit 1
+fi
+
 function create_service() {
     local cluster_name=$1
     local task_definition=$2
@@ -147,7 +154,7 @@ error="+++ ^^^
 # No easy way to tell if the target group has changed, since describe-services only returns the load balancer name
 if [[ "$lb_config" == "null" ]]; then
   if [[ -n "$target_group" ]] || [[ -n "$load_balancer_name" ]]; then
-    echo "$error"
+    echo "$error. ELB configured but none set in container"
     exit 1
   fi
 fi
@@ -156,13 +163,13 @@ if [[ "$lb_config" == "null" ]]; then
   # noop
   true
 elif [[ $(echo "$lb_config" |jq -r '.containerName') != "$target_container" ]] || [[ $(echo "$lb_config" |jq -r '.containerPort') -ne $target_port ]]; then
-  echo "$error"
+  echo "$error. Container config differs"
   exit 1
 elif [[ -n "$target_group" ]] && [[ $(echo "$lb_config" |jq -r '.targetGroupArn') != "$target_group" ]]; then
-  echo "$error"
+  echo "$error. ALB config differs"
   exit 1
 elif [[ -n "$load_balancer_name" ]] && [[ $(echo "$lb_config" |jq -r '.loadBalancerName') != "$load_balancer_name" ]]; then
-  echo "$error"
+  echo "$error. ELB config differs"
   exit 1
 fi
 
