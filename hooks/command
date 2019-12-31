@@ -40,6 +40,7 @@ target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
 execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
 region=${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-""}
+volumes=${BUILDKITE_PLUGIN_ECS_DEPLOY_VOLUMES:-""}
 
 if [[ $region != "" ]]; then
     AWS_DEFAULT_REGION=${region}
@@ -129,6 +130,11 @@ fi
 
 if [[ -n "${execution_role}" ]]; then
     register_command+=" --execution-role-arn ${execution_role}"
+fi
+
+if [[ -n "${volumes}" ]]; then
+    volumes_json=$(cat "${volumes}")
+    register_command+=" --volumes '$volumes_json'"
 fi
 
 json_output=$(eval "$register_command")
