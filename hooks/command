@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-function error() {
+function error_handler() {
   echo "$1"
   exit "$2"
 }
@@ -10,32 +10,50 @@ function auth_ecr() {
   local docker_login
   docker_login=$(aws ecr get-login --no-include-email)
   if ! eval "${docker_login}"; then
-    error "Unable to log in to ECR" 2
+    error_handler "Unable to log in to ECR" 2
   fi
 }
 
-deploy_config=${BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOY_CONFIG:-""}
-validate_config=${BUILDKITE_PLUGIN_ECS_DEPLOY_VALIDATE_CONFIG:-""}
+deploy_config=${BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOY:-""}
+validate_config=${BUILDKITE_PLUGIN_ECS_DEPLOY_VALIDATE:-""}
 
-if [[ -z "${deploy_config}" && -z "${validate_config}" ]] || [[ -e "${deploy_config}" && -e "${validate_config}" ]]; then
-  error "One of either validate or deploy must be specified. See (TBA) for examples" 1
+# If both or neither 'deploy' or 'validate' options are given, exit with an error
+if [[ -z "${deploy_config}" && -z "${validate_config}" ]] || [[ -n "${deploy_config}" && -n "${validate_config}" ]]; then
+  error_handler "One of either validate or deploy must be specified. See (TBA) for examples" 1
 fi
 
 auth_ecr
 
-if [[ -e "${deploy_config}" ]]; then
+# This pattern is borrowed from https://github.com/buildkite-plugins/artifacts-buildkite-plugin
+#
+# Use a 'configs' array to determine how many config files have been provided. For now we only support 1 but this may increase in the future.
+configs=()
+
+if [[ -n "${deploy_config}" ]]; then
+  configs+=("${deploy_config}")
+  if [[ "${#configs[@]}" -gt 1 ]]; then
+    error_handler "Only one config file is supported" 1
+  fi
   deploy_service "${deploy_config}"
-fi
-
-if [[ -e "${validate_config}" ]]; then
+elif [[ -n "${validate_config}" ]]; then
+  configs+=("${validate_config}")
+  if [[ "${#configs[@]}" -gt 1 ]]; then
+    error_handler "Only one config file is supported" 1
+  fi
   validate_service "${validate_config}"
+else
+  # This should never be reached
+  exit 1
 fi
-
 
 function deploy_service() {
-  docker run --rm --tty -v "$(pwd)":/app -w /app 909551307430.dkr.ecr.us-east-1.amazonaws.com/ecs-toolkit:latest deploy -c "${1}" --ci
-}
+  if ! docker run --rm --tty -v "$(pwd)":/app -w /app 909551307430.dkr.ecr.us-east-1.amazonaws.com/ecs-toolkit:latest deploy -c "${1}" --ci ; then
+    error_handler "ecs-deploy Buildkite plugin failed: deploy" 3
+  fi
+} 
 
 function validate_service() {
-  docker run --rm --tty -v "$(pwd)":/app -w /app 909551307430.dkr.ecr.us-east-1.amazonaws.com/ecs-toolkit:latest validate -c "${1}"
+  if ! docker run --rm --tty -v "$(pwd)":/app -w /app 909551307430.dkr.ecr.us-east-1.amazonaws.com/ecs-toolkit:latest validate -c "${1}" ; then
+    error_handler "ecs-deploy Buildkite plugin failed: validate" 3
+  fi
 }
