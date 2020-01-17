@@ -1,40 +1,17 @@
 name: ECS Deploy
 description: Deploy to ECS
-author: https://github.com/buildkite
+author: https://github.com/envato
 requirements:
   - aws
-  - jq
+  - docker
 configuration:
   properties:
-    cluster:
-      type: string
-    service:
-      type: string
-    task-definition:
-      type: string
-    task-family:
-      type: string
-    image:
+    deploy:
       type: [ string, array ]
-    desired-count:
-      type: string
-    task-role-arn:
-      type: string
-    target-group:
-      type: string
-    load-balanccer-name:
-      type: string
-    target-container-name:
-      type: string
-    target-container-port:
-      type: integer
-    execution-role:
-      type: string
-    deployment-config:
-      type: string
-  required:
-    - cluster
-    - service
-    - task-definition
-    - task-family
-    - image
+    validate:
+      type: [ string, array ]
+  oneOf:
+    - required:
+      - deploy
+    - required:
+      - validate
