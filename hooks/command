@@ -37,5 +37,5 @@ function deploy_service() {
 }
 
 function validate_service() {
-  docker run --rm --tty 909551307430.dkr.ecr.us-east-1.amazonaws.com/ecs-toolkit:latest validate -c "${1}"
+  docker run --rm --tty -v "$(pwd)":/app -w /app 909551307430.dkr.ecr.us-east-1.amazonaws.com/ecs-toolkit:latest validate -c "${1}"
 }
