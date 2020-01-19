@@ -7,9 +7,9 @@ requirements:
 configuration:
   properties:
     deploy:
-      type: [ string, array ]
+      type: string
     validate:
-      type: [ string, array ]
+      type: string
   oneOf:
     - required:
       - deploy
