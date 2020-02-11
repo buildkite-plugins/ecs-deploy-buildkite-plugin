@@ -56,7 +56,7 @@ min_max_percent=(${deployment_config//\// })
 min_deploy_perc=${min_max_percent[0]}
 max_deploy_perc=${min_max_percent[1]}
 
-if [[ $(jq '. | keys |first' $task_definition) != "0" ]]; then
+if [[ $(jq '. | keys |first' "$task_definition") != "0" ]]; then
     echo "^^^"
     echo "Invalid Task Definition"
     echo 'JSON definition should be in the format of [{"image": "..."}]'
