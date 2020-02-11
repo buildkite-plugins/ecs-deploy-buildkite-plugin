@@ -42,7 +42,8 @@ execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
 region=${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-""}
 
 if [[ $region != "" ]]; then
-    AWS_DEFAULT_REGION=${region}
+  # shellcheck disable=SC2034 # Used by the aws cli
+  AWS_DEFAULT_REGION=${region}
 fi
 
 # Resolve any runtime environment variables it has
