@@ -99,6 +99,12 @@ Example: `"0/100"`
 
 The region we deploy the ECS Service to.
 
+### `requires-compatibilities` (optional)
+
+The launch type the task requires. If no value is specified, it will default to EC2. Valid values include EC2 and FARGATE.
+
+Example: `"FARGATE"`
+
 ## AWS Roles
 
 At a minimum this plugin requires the following AWS permissions to be granted to the agent running this step:
