@@ -40,6 +40,7 @@ target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
 execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
 region=${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-""}
+requires_compatibilities=${BUILDKITE_PLUGIN_ECS_DEPLOY_REQUIRES_COMPATIBILITIES:-""}
 
 if [[ $region != "" ]]; then
   # shellcheck disable=SC2034 # Used by the aws cli
@@ -130,6 +131,10 @@ fi
 
 if [[ -n "${execution_role}" ]]; then
     register_command+=" --execution-role-arn ${execution_role}"
+fi
+
+if [[ -n "${requires_compatibilities}" ]]; then
+    register_command+=" --requires-compatibilities ${requires_compatibilities}"
 fi
 
 json_output=$(eval "$register_command")
