@@ -139,6 +139,7 @@ if [[ -n "${requires_compatibilities}" ]]; then
 fi
 
 if [[ -n "${network_mode}" ]]; then
+    echo "--- :ecs: Using network mode ${network_mode}"
     register_command+=" --network-mode ${network_mode}"
 fi
 
