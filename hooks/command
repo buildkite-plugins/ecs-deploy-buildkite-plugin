@@ -131,10 +131,12 @@ if [[ -n "${task_role_arn}" ]]; then
 fi
 
 if [[ -n "${execution_role}" ]]; then
+    echo "--- :ecs: execution_role ${execution_role}"
     register_command+=" --execution-role-arn ${execution_role}"
 fi
 
 if [[ -n "${requires_compatibilities}" ]]; then
+    echo "--- :ecs: requires_compatibilities ${requires_compatibilities}"
     register_command+=" --requires-compatibilities ${requires_compatibilities}"
 fi
 
