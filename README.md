@@ -105,6 +105,12 @@ The launch type the task requires. If no value is specified, it will default to 
 
 Example: `"FARGATE"`
 
+### `network-mode` (optional)
+
+The Docker networking mode to use for the containers in the task. The valid values are `none`, `bridge`, `awsvpc`, and `host`. The default Docker network mode is `bridge`.
+
+Example: `"awsvpc"`
+
 ## AWS Roles
 
 At a minimum this plugin requires the following AWS permissions to be granted to the agent running this step:

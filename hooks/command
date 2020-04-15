@@ -41,6 +41,7 @@ target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
 execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
 region=${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-""}
 requires_compatibilities=${BUILDKITE_PLUGIN_ECS_DEPLOY_REQUIRES_COMPATIBILITIES:-""}
+network_mode=${BUILDKITE_PLUGIN_ECS_DEPLOY_NETWORK_MODE:-""}
 
 if [[ $region != "" ]]; then
   # shellcheck disable=SC2034 # Used by the aws cli
@@ -135,6 +136,10 @@ fi
 
 if [[ -n "${requires_compatibilities}" ]]; then
     register_command+=" --requires-compatibilities ${requires_compatibilities}"
+fi
+
+if [[ -n "${network_mode}" ]]; then
+    register_command+=" --network-mode ${network_mode}"
 fi
 
 json_output=$(eval "$register_command")
