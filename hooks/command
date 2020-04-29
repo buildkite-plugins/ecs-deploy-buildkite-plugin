@@ -76,6 +76,8 @@ function create_service() {
     target_group_arguments=$(generate_target_group_arguments "$5" "$6" "$7")
 
     # shellcheck disable=SC2016
+    echo $cluster_name
+    echo $service_name
     service_defined=$(aws ecs describe-services --cluster "$cluster_name" --service "$service_name" --query 'services[?status==`ACTIVE`].status' --output text |wc -l)
     if [[ $service_defined -eq 0 ]]; then
         echo "--- :ecs: Creating a Service $service_name in cluster $cluster_name"
