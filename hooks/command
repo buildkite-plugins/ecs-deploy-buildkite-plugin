@@ -79,6 +79,7 @@ function create_service() {
     echo $cluster_name
     echo $service_name
     service_defined=$(aws ecs describe-services --cluster "$cluster_name" --service "$service_name" --query 'services[?status==`ACTIVE`].status' --output text |wc -l)
+    echo $service_defined
     if [[ $service_defined -eq 0 ]]; then
         echo "--- :ecs: Creating a Service $service_name in cluster $cluster_name"
         # shellcheck disable=SC2086
