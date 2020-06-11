@@ -186,6 +186,9 @@ if [[ "$lb_config" == "null" ]]; then
   # noop
   true
 elif [[ $(echo "$lb_config" |jq -r '.containerName') != "$target_container" ]] || [[ $(echo "$lb_config" |jq -r '.containerPort') -ne $target_port ]]; then
+  echo "$lb_config"
+  echo "$target_container"
+  echo "$target_port"
   echo "$error. Container config differs"
   exit 1
 elif [[ -n "$target_group" ]] && [[ $(echo "$lb_config" |jq -r '.targetGroupArn') != "$target_group" ]]; then
