@@ -49,6 +49,7 @@ if [[ $region != "" ]]; then
   # shellcheck disable=SC2034 # Used by the aws cli
   AWS_DEFAULT_REGION=${region}
 fi
+echo ${AWS_DEFAULT_REGION}
 
 # Resolve any runtime environment variables it has
 target_group=$(eval "echo $target_group")
@@ -189,8 +190,6 @@ elif [[ $(echo "$lb_config" |jq -r '.containerName') != "$target_container" ]] |
   echo "$error. Container config differs"
   exit 1
 elif [[ -n "$target_group" ]] && [[ $(echo "$lb_config" |jq -r '.targetGroupArn') != "$target_group" ]]; then
-  echo "$lb_config"
-  echo "$target_group"
   echo "$error. ALB config differs"
   exit 1
 elif [[ -n "$load_balancer_name" ]] && [[ $(echo "$lb_config" |jq -r '.loadBalancerName') != "$load_balancer_name" ]]; then
