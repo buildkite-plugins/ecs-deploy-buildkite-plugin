@@ -196,4 +196,29 @@ elif [[ -n "$load_balancer_name" ]] && [[ $(echo "$lb_config" |jq -r '.loadBalan
   exit 1
 fi
 
+echo "--- :ecs: Updating service for ${service_name}"
+echo "for cluster: ${cluster}"
+echo "revision: ${task_family}:${task_revision}"
+aws ecs update-service --cluster "${cluster}" --service "${service_name}" --task-definition "${task_family}:${task_revision}"
 
+## Now we wait till it's stable
+echo "--- :ecs: Waiting for services to stabilize"
+deploy_exitcode=0
+aws ecs wait services-stable \
+  --cluster "${cluster}" \
+  --service "${service_name}" || deploy_exitcode=$?
+
+
+service_events=$(aws ecs describe-services \
+  --cluster "${cluster}" \
+  --service "${service_name}" \
+  --query 'services[].events' --output text)
+
+if [[ $deploy_exitcode -eq 0 ]]; then
+  echo "--- :ecs: Service is up 🚀"
+  echo "$service_events"
+else
+  echo "+++ :ecs: Service failed to deploy ❌"
+  echo "$service_events"
+  exit $deploy_exitcode
+fi
