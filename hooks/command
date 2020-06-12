@@ -206,7 +206,7 @@ echo "--- :ecs: Waiting for services to stabilize"
 deploy_exitcode=0
 aws ecs wait services-stable \
   --cluster "${cluster}" \
-  --service "${service_name}" || deploy_exitcode=$?
+  --services "${service_name}" || deploy_exitcode=$?
 
 
 service_events=$(aws ecs describe-services \
