@@ -49,7 +49,6 @@ if [[ $region != "" ]]; then
   # shellcheck disable=SC2034 # Used by the aws cli
   AWS_DEFAULT_REGION=${region}
 fi
-echo ${AWS_DEFAULT_REGION}
 
 # Resolve any runtime environment variables it has
 target_group=$(eval "echo $target_group")
@@ -198,10 +197,10 @@ elif [[ -n "$load_balancer_name" ]] && [[ $(echo "$lb_config" |jq -r '.loadBalan
 fi
 
 echo "--- :ecs: Updating service for ${service_name}"
-aws ecs update-service \
-  --cluster "${cluster}" \
-  --service "${service_name}" \
-  --task-definition "${task_family}:${task_revision}"
+echo "for cluster: ${cluster}"
+echo "revision: ${task_family}:${task_revision}"
+aws ecs update-service --cluster "${cluster}" --service "${service_name}" --task-definition "${task_family}:${task_revision}"
+echo "test"
 
 ## Now we wait till it's stable
 echo "--- :ecs: Waiting for services to stabilize"
