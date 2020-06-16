@@ -199,7 +199,7 @@ fi
 echo "--- :ecs: Updating service for ${service_name}"
 echo "for cluster: ${cluster}"
 echo "revision: ${task_family}:${task_revision}"
-aws ecs update-service --cluster "${cluster}" --service "${service_name}" --task-definition "${task_family}:${task_revision}"
+aws ecs update-service --cluster "${cluster}" --service "${service_name}" --task-definition "${task_family}:${task_revision}" > /dev/null
 
 ## Now we wait till it's stable
 echo "--- :ecs: Waiting for services to stabilize"
