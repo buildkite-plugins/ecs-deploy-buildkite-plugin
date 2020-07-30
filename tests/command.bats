@@ -1,8 +1,16 @@
 #!/usr/bin/env bats
 
-apk --no-cache add jq
-
 load '/usr/local/lib/bats/load.bash'
+
+setup() {
+  # emulate the upcoming bats `setup_file`
+  # https://github.com/bats-core/bats-core/issues/39#issuecomment-377015447
+  if [[ $BATS_TEST_NUMBER -eq 1 ]]; then
+    # output to fd 3, prefixed with hashes, for TAP compliance:
+    # https://github.com/bats-core/bats-core/blob/v1.2.0/README.md#printing-to-the-terminal
+    apk --no-cache add jq | sed -e 's/^/# /' >&3
+  fi
+}
 
 # Uncomment to enable stub debug output:
 # export AWS_STUB_DEBUG=/dev/tty
