@@ -40,6 +40,10 @@ target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
 execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
 region=${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-""}
+requires_compatibilities=${BUILDKITE_PLUGIN_ECS_DEPLOY_REQUIRES_COMPATIBILITIES:-""}
+network_mode=${BUILDKITE_PLUGIN_ECS_DEPLOY_NETWORK_MODE:-""}
+task_cpu=${BUILDKITE_PLUGIN_ECS_DEPLOY_CPU:-""}
+task_memory=${BUILDKITE_PLUGIN_ECS_DEPLOY_MEMORY:-""}
 
 if [[ $region != "" ]]; then
   # shellcheck disable=SC2034 # Used by the aws cli
@@ -132,6 +136,24 @@ if [[ -n "${execution_role}" ]]; then
     register_command+=" --execution-role-arn ${execution_role}"
 fi
 
+if [[ -n "${requires_compatibilities}" ]]; then
+    register_command+=" --requires-compatibilities ${requires_compatibilities}"
+fi
+
+if [[ -n "${network_mode}" ]]; then
+    register_command+=" --network-mode ${network_mode}"
+fi
+
+if [[ -n "${task_cpu}" ]]; then
+    register_command+=" --cpu ${task_cpu}"
+fi
+
+if [[ -n "${task_memory}" ]]; then
+    register_command+=" --memory ${task_memory}"
+fi
+
+echo "--- :ecs: task register command: ${register_command}"
+
 json_output=$(eval "$register_command")
 register_exit_code=$?
 
@@ -175,10 +197,9 @@ elif [[ -n "$load_balancer_name" ]] && [[ $(echo "$lb_config" |jq -r '.loadBalan
 fi
 
 echo "--- :ecs: Updating service for ${service_name}"
-aws ecs update-service \
-  --cluster "${cluster}" \
-  --service "${service_name}" \
-  --task-definition "${task_family}:${task_revision}"
+echo "for cluster: ${cluster}"
+echo "revision: ${task_family}:${task_revision}"
+aws ecs update-service --cluster "${cluster}" --service "${service_name}" --task-definition "${task_family}:${task_revision}" > /dev/null
 
 ## Now we wait till it's stable
 echo "--- :ecs: Waiting for services to stabilize"
