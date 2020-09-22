@@ -1,0 +1,8 @@
+[
+  {
+    "name": "docker-sock",
+    "host": {
+      "sourcePath": "/run/docker.sock"
+    }
+  }
+]

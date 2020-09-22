@@ -7,7 +7,7 @@ A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) for deploying 
 * Updates the ECS service to use the new task definition ([`update-service`](http://docs.aws.amazon.com/cli/latest/reference/ecs/update-service.html))
 * Waits for the service to stabilize ([`wait services-stable`](http://docs.aws.amazon.com/cli/latest/reference/ecs/wait/services-stable.html))
 
-## Example
+## Basic Example
 
 ```yml
 steps:
@@ -20,6 +20,23 @@ steps:
           service: "my-service"
           task-definition: "examples/hello-world.json"
           task-family: "hello-world"
+          image: "${ECR_REPOSITORY}/hello-world:${BUILDKITE_BUILD_NUMBER}"
+```
+
+## Mounted Volumes Example
+
+```yml
+steps:
+  - label: ":ecs: :rocket:"
+    concurrency_group: "my-service-deploy"
+    concurrency: 1
+    plugins:
+      - ecs-deploy#v1.4.1:
+          cluster: "my-ecs-cluster"
+          service: "my-service"
+          task-definition: "examples/mount-containers.json"
+          task-family: "hello-world"
+          volumes: "examples/mount-volumes.json"
           image: "${ECR_REPOSITORY}/hello-world:${BUILDKITE_BUILD_NUMBER}"
 ```
 
@@ -66,6 +83,12 @@ image:
 
 An IAM ECS Task Role to assign to tasks.
 Requires the `iam:PassRole` permission for the ARN specified.
+
+### `volumes`
+
+The file path to the ECS volumes definition JSON file.
+
+Example: `"ecs/volumes.json"`
 
 ### `target-group` (optional)
 
