@@ -40,6 +40,7 @@ target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
 execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
 region=${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-""}
+env_file_url=${BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_FILE_URL:-""}
 
 if [[ $region != "" ]]; then
   # shellcheck disable=SC2034 # Used by the aws cli
@@ -118,6 +119,9 @@ for image in "${images[@]}"; do
   )
   image_idx=$((image_idx+1))
 done
+
+echo "--- :thisisfine: "
+echo "$container_definitions_json"
 
 echo "--- :ecs: Registering new task definition for ${task_family}"
 register_command="aws ecs register-task-definition \
