@@ -124,7 +124,6 @@ for image in "${images[@]}"; do
 done
 
 ## This adds the env vars to each container
-echo "--- :thisisfine: attempting env var load"
 image_idx=0
 for image in "${images[@]}"; do
   container_definitions_json=$(echo "$container_definitions_json" | jq ".[${image_idx}].environment=[]"
@@ -138,9 +137,6 @@ for image in "${images[@]}"; do
   done
   image_idx=$((image_idx+1))
 done
-
-echo "--- :thisisfine: "
-echo "$container_definitions_json"
 
 echo "--- :ecs: Registering new task definition for ${task_family}"
 register_command="aws ecs register-task-definition \
