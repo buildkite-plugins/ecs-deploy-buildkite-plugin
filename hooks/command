@@ -42,7 +42,7 @@ execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
 region=${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-""}
 env_vars=()
 while read -r line ; do
-  [[ -n "$line" ]] && images+=("$line")
+  [[ -n "$line" ]] && env_vars+=("$line")
 done <<< "$(plugin_read_list ENV)"
 
 if [[ $region != "" ]]; then
