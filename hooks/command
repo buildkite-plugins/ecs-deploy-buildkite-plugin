@@ -124,6 +124,7 @@ for image in "${images[@]}"; do
 done
 
 ## This adds the env vars to each container
+echo "--- :thisisfine: attempting env var load"
 image_idx=0
 container_definitions_json=$(cat "${task_definition}")
 for image in "${images[@]}"; do
