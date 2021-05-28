@@ -32,8 +32,8 @@ configuration:
       type: string
     deployment-config:
       type: string
-    env-file-url:
-      type: string
+    env:
+      type: array
   required:
     - cluster
     - service
