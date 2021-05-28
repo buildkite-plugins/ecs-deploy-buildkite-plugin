@@ -126,8 +126,6 @@ done
 ## This adds the env vars to each container
 image_idx=0
 for image in "${images[@]}"; do
-  container_definitions_json=$(echo "$container_definitions_json" | jq ".[${image_idx}].environment=[]"
-  )
   for env_var in "${env_vars[@]}"; do
     # shellcheck disable=SC2206
     var_val=(${env_var//=/ })
