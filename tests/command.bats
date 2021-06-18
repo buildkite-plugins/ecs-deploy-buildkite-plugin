@@ -23,7 +23,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions '\'$expected_container_definition\'' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
@@ -41,7 +41,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
 }
 
@@ -52,7 +52,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_0=hello-world:llamas
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_1=hello-world:alpacas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/multiple-images.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/multiple-images.json
 
   expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hello-world:llamas",\n    "memory": 100,\n    "name": "sample",\n    "portMappings": [\n      {\n        "containerPort": 80,\n        "hostPort": 80\n      }\n    ]\n  },\n  {\n    "essential": true,\n    "image": "hello-world:alpacas",\n    "memory": 100,\n    "name": "sample",\n    "portMappings": [\n      {\n        "containerPort": 80,\n        "hostPort": 80\n      }\n    ]\n  }\n]'
 
@@ -72,7 +72,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_0
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_1
 }
@@ -83,7 +83,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions '\'$expected_container_definition\'' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
@@ -102,9 +102,9 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
 }
 
 @test "Run a deploy with task role" {
@@ -113,7 +113,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN=arn:aws:iam::012345678910:role/world
 
   stub aws \
@@ -132,7 +132,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN
 }
@@ -143,7 +143,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP=arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME=nginx
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT=80
@@ -167,7 +167,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT
@@ -179,7 +179,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME=nginx-elb
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME=nginx
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT=80
@@ -201,7 +201,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME
@@ -213,7 +213,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE=arn:aws:iam::012345678910:role/world
 
   stub aws \
@@ -232,7 +232,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE
 }
@@ -243,7 +243,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION="0/100"
 
   stub aws \
@@ -263,7 +263,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION
 }
@@ -274,7 +274,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=tests/incorrect-container-definition.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=tests/incorrect-container-definition.json
 
   run "$PWD/hooks/command"
   assert_failure
@@ -282,7 +282,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
 
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
   unset BUILDKITE_BUILD_NUMBER
 }
