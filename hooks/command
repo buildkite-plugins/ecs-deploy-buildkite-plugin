@@ -94,7 +94,7 @@ function create_service() {
         --desired-count "$desired_count" \
         --deployment-configuration "maximumPercent=${max_deploy_perc},minimumHealthyPercent=${min_deploy_perc}" \
         $target_group_arguments \
-        --cli-input-json service_definition_json
+        --cli-input-json "$service_definition_json"
     fi
 }
 
