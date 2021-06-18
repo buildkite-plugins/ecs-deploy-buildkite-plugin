@@ -82,6 +82,18 @@ Example: `"ecs/task.json"`
 }
 ```
 
+### `service-definition`
+
+The file path to the ECS service definition JSON file. Parameters specified in this file will be overridden by other arguments if set, e.g. `cluster`, `desired-count`, etc. Note that currently this json input will only be used when creating the service, NOT when updating it.
+
+Example: `"ecs/service.json"`
+```json
+{
+  "schedulingStrategy": "DAEMON",
+  "propagateTags": "TASK_DEFINITION"
+}
+```
+
 ### `task-family`
 
 The name of the task family.

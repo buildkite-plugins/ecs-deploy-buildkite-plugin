@@ -16,6 +16,8 @@ configuration:
       type: string
     task-family:
       type: string
+    service-definition:
+      type: string
     image:
       type: [ string, array ]
     desired-count:

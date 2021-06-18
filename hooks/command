@@ -32,6 +32,7 @@ while read -r line ; do
   [[ -n "$line" ]] && images+=("$line")
 done <<< "$(plugin_read_list IMAGE)"
 task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION:-""}
+service_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION:-""}
 container_definitions=${BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS?}
 desired_count=${BUILDKITE_PLUGIN_ECS_DEPLOY_DESIRED_COUNT:-"1"}
 task_role_arn=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN:-""}
@@ -75,6 +76,11 @@ function create_service() {
     local desired_count=$4
     local target_group_arguments
     target_group_arguments=$(generate_target_group_arguments "$5" "$6" "$7")
+    
+    local service_definition_json="{}"
+    if [[ -n "${service_definition}" ]]; then
+      service_definition_json=$(cat "${service_definition}")
+    fi
 
     # shellcheck disable=SC2016
     service_defined=$(aws ecs describe-services --cluster "$cluster_name" --service "$service_name" --query 'services[?status==`ACTIVE`].status' --output text |wc -l)
@@ -87,7 +93,8 @@ function create_service() {
         --task-definition "$task_definition" \
         --desired-count "$desired_count" \
         --deployment-configuration "maximumPercent=${max_deploy_perc},minimumHealthyPercent=${min_deploy_perc}" \
-        $target_group_arguments
+        $target_group_arguments \
+        --cli-input-json service_definition_json
     fi
 }
 
@@ -152,11 +159,10 @@ fi
 
 if [[ -n "${task_definition}" ]]; then
     task_definition_json=$(cat "${task_definition}")
-    register_command+=" --cli-input-json '$task_definition_json'"
+    register_command+=" --cli-input-json '${task_definition_json}'"
 fi
 
 echo "--- :ecs: register command:"
-echo $register_command
 
 json_output=$(eval "$register_command")
 register_exit_code=$?
