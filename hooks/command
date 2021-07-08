@@ -132,6 +132,14 @@ if [[ -n "${execution_role}" ]]; then
     register_command+=" --execution-role-arn ${execution_role}"
 fi
 
+if [[ -n "${cpu}" ]]; then
+    register_command+=" --cpu ${cpu}"
+fi
+
+if [[ -n "${memory}" ]]; then
+    register_command+=" --memory ${memory}"
+fi
+
 json_output=$(eval "$register_command")
 register_exit_code=$?
 
