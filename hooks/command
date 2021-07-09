@@ -40,6 +40,8 @@ target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
 execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
 region=${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-""}
+cpu=${BUILDKITE_PLUGIN_ECS_DEPLOY_CPU:-""}
+memory=${BUILDKITE_PLUGIN_ECS_DEPLOY_MEMORY:-""}
 
 if [[ $region != "" ]]; then
   # shellcheck disable=SC2034 # Used by the aws cli
