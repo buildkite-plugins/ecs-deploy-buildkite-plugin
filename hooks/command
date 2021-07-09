@@ -141,7 +141,7 @@ fi
 if [[ -n "${memory}" ]]; then
     register_command+=" --memory ${memory}"
 fi
-
+echo "$register_command"
 json_output=$(eval "$register_command")
 register_exit_code=$?
 
