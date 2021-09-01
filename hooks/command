@@ -181,6 +181,12 @@ create_service "$cluster" "${task_family}:${task_revision}" "$service_name" "$de
 
 # shellcheck disable=SC2016
 lb_config=$(aws ecs describe-services --cluster "$cluster" --services "$service_name" --query 'services[?status==`ACTIVE`]' |jq -r '.[0].loadBalancers[0]')
+echo "load balance config"
+echo "$lb_config"
+echo "$(echo "$lb_config" |jq -r '.containerName')"
+echo "$target_container"
+echo "$(echo "$lb_config" |jq -r '.containerPort')"
+echo "$target_port"
 error="+++ ^^^
 +++ Cannot update a service to add/remove a load balancer. First delete the service and then run again, or rename the service to force a new one to be created"
 
