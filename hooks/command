@@ -40,8 +40,11 @@ target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
 execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
 region=${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-""}
-cpu=${BUILDKITE_PLUGIN_ECS_DEPLOY_CPU:-""}
-memory=${BUILDKITE_PLUGIN_ECS_DEPLOY_MEMORY:-""}
+requires_compatibilities=${BUILDKITE_PLUGIN_ECS_DEPLOY_REQUIRES_COMPATIBILITIES:-""}
+network_mode=${BUILDKITE_PLUGIN_ECS_DEPLOY_NETWORK_MODE:-""}
+task_cpu=${BUILDKITE_PLUGIN_ECS_DEPLOY_CPU:-""}
+task_memory=${BUILDKITE_PLUGIN_ECS_DEPLOY_MEMORY:-""}
+platform_version=${BUILDKITE_PLUGIN_ECS_DEPLOY_PLATFORM_VERSION:-"LATEST"}
 
 if [[ $region != "" ]]; then
   # shellcheck disable=SC2034 # Used by the aws cli
@@ -72,6 +75,7 @@ function create_service() {
     local desired_count=$4
     local target_group_arguments
     target_group_arguments=$(generate_target_group_arguments "$5" "$6" "$7")
+    local platform_version=$8
 
     # shellcheck disable=SC2016
     service_defined=$(aws ecs describe-services --cluster "$cluster_name" --service "$service_name" --query 'services[?status==`ACTIVE`].status' --output text |wc -l)
@@ -83,6 +87,7 @@ function create_service() {
         --service-name "$service_name" \
         --task-definition "$task_definition" \
         --desired-count "$desired_count" \
+        --platform-version "$platform_version" \
         --deployment-configuration "maximumPercent=${max_deploy_perc},minimumHealthyPercent=${min_deploy_perc}" \
         $target_group_arguments
     fi
@@ -134,14 +139,24 @@ if [[ -n "${execution_role}" ]]; then
     register_command+=" --execution-role-arn ${execution_role}"
 fi
 
-if [[ -n "${cpu}" ]]; then
-    register_command+=" --cpu ${cpu}"
+if [[ -n "${requires_compatibilities}" ]]; then
+    register_command+=" --requires-compatibilities ${requires_compatibilities}"
 fi
 
-if [[ -n "${memory}" ]]; then
-    register_command+=" --memory ${memory}"
+if [[ -n "${network_mode}" ]]; then
+    register_command+=" --network-mode ${network_mode}"
 fi
-echo "$register_command"
+
+if [[ -n "${task_cpu}" ]]; then
+    register_command+=" --cpu ${task_cpu}"
+fi
+
+if [[ -n "${task_memory}" ]]; then
+    register_command+=" --memory ${task_memory}"
+fi
+
+echo "--- :ecs: task register command: ${register_command}"
+
 json_output=$(eval "$register_command")
 register_exit_code=$?
 
@@ -155,7 +170,7 @@ task_revision=$(jq '.taskDefinition.revision' <<< "$json_output")
 echo "Registered ${task_family}:${task_revision}"
 
 # Create service if it doesn't already exist
-create_service "$cluster" "${task_family}:${task_revision}" "$service_name" "$desired_count" "$target_group" "$target_container" "$target_port"
+create_service "$cluster" "${task_family}:${task_revision}" "$service_name" "$desired_count" "$target_group" "$target_container" "$target_port" "$platform_version"
 
 # shellcheck disable=SC2016
 lb_config=$(aws ecs describe-services --cluster "$cluster" --services "$service_name" --query 'services[?status==`ACTIVE`]' |jq -r '.[0].loadBalancers[0]')
