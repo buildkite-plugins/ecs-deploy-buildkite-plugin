@@ -52,8 +52,6 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_0=hello-world:llamas
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_1=hello-world:alpacas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_0="FOO=bar"
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_1="BAZ=bing"
 
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/multiple-images.json
 
@@ -78,6 +76,45 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_0
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_1
+}
+
+@test "Add env vars on multiple images" {
+  export BUILDKITE_BUILD_NUMBER=1
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_0=hello-world:llamas
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_1=hello-world:alpacas
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_0="FOO=bar"
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_1="BAZ=bing"
+
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/multiple-images.json
+
+  # first command stubbed saves the container definition to ${_TMP_DIR}/container_definition for later review and manipulation
+  stub aws \
+    "ecs register-task-definition --family hello-world --container-definitions '*' : echo \"\$6\" > ${_TMP_DIR}/container_definition ; echo '{\"taskDefinition\":{\"revision\":1}}'"
+
+  run "$PWD/hooks/command"
+
+  # there is no assert_success because we are just checking that the definition was updated accordingly
+  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[0].environment[0].name') 'FOO'
+  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[0].environment[0].value') 'bar'
+  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[1].environment[0].name') 'FOO'
+  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[1].environment[0].value') 'bar'
+  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[0].environment[1].name') 'BAZ'
+  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[0].environment[1].value') 'bing'
+  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[1].environment[1].name') 'BAZ'
+  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[1].environment[1].value') 'bing'
+
+  # as the aws command is called more times than stubbed, it is unstubbed automatically
+  # unstub aws
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_0
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_1
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_0
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_1
 }
 
 @test "Run a deploy when service does not exist" {
