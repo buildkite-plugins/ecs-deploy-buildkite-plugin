@@ -17,6 +17,7 @@ setup() {
 
 expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hello-world:llamas",\n    "memory": 100,\n    "name": "sample",\n    "portMappings": [\n      {\n        "containerPort": 80,\n        "hostPort": 80\n      }\n    ]\n  }\n]'
 expected_task_definition='{\n    "networkMode": "awsvpc"\n}'
+expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propagateTags": "TASK_DEFINITION"\n}'
 
 @test "Run a deploy when service exists" {
   export BUILDKITE_BUILD_NUMBER=1
@@ -157,7 +158,39 @@ expected_task_definition='{\n    "networkMode": "awsvpc"\n}'
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 : echo -n ''" \
+    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --cli-input-json '{}' : echo -n ''" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
+    "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
+    "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
+    "ecs describe-services --cluster my-cluster --service my-service : echo ok"
+
+  run "$PWD/hooks/command"
+
+  assert_success
+  assert_output --partial "Service is up 🚀"
+
+  unstub aws
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
+}
+
+
+@test "Run a deploy with a new service with definition" {
+  export BUILDKITE_BUILD_NUMBER=1
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION=examples/service-definition.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
+
+  stub aws \
+    "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
+    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --cli-input-json $'$expected_service_definition' : echo -n ''" \
     "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
@@ -222,7 +255,7 @@ expected_task_definition='{\n    "networkMode": "awsvpc"\n}'
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --load-balancers targetGroupArn=arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc,containerName=nginx,containerPort=80 : echo -n ''" \
+    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --load-balancers targetGroupArn=arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc,containerName=nginx,containerPort=80 --cli-input-json '{}' : echo -n ''" \
     "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo '$alb_config'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
@@ -256,7 +289,7 @@ expected_task_definition='{\n    "networkMode": "awsvpc"\n}'
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --load-balancers loadBalancerName=nginx-elb,containerName=nginx,containerPort=80 : echo -n ''" \
+    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --load-balancers loadBalancerName=nginx-elb,containerName=nginx,containerPort=80 --cli-input-json '{}' : echo -n ''" \
     "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo '[{\"loadBalancers\":[{\"loadBalancerName\": \"nginx-elb\",\"containerName\": \"nginx\",\"containerPort\": 80}]}]'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
@@ -318,7 +351,7 @@ expected_task_definition='{\n    "networkMode": "awsvpc"\n}'
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=100,minimumHealthyPercent=0 : echo -n ''" \
+    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=100,minimumHealthyPercent=0 --cli-input-json '{}' : echo -n ''" \
     "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \

@@ -1,0 +1,4 @@
+{
+    "schedulingStrategy": "DAEMON",
+    "propagateTags": "TASK_DEFINITION"
+}
