@@ -56,7 +56,7 @@ expected_task_definition='{\n    "networkMode": "awsvpc"\n}'
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/task-definition.json
 
   stub aws \
-    "ecs register-task-definition --family hello-world --container-definitions '\'$expected_container_definition\'' --cli-input-json '\'$expected_task_definition\'' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
+    "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' --cli-input-json $'$expected_task_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo '1'" \
     "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
