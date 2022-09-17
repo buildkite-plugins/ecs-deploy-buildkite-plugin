@@ -40,6 +40,10 @@ target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
 execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
 region=${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-""}
+env_vars=()
+while read -r line ; do
+  [[ -n "$line" ]] && env_vars+=("$line")
+done <<< "$(plugin_read_list ENV)"
 
 if [[ $region != "" ]]; then
   # shellcheck disable=SC2034 # Used by the aws cli
@@ -116,6 +120,19 @@ for image in "${images[@]}"; do
   container_definitions_json=$(echo "$container_definitions_json" | jq --arg IMAGE "$image" \
   ".[${image_idx}].image=\$IMAGE"
   )
+  image_idx=$((image_idx+1))
+done
+
+## This adds the env vars to each container
+image_idx=0
+for image in "${images[@]}"; do
+  for env_var in "${env_vars[@]}"; do
+    # shellcheck disable=SC2206
+    var_val=(${env_var//=/ })
+    container_definitions_json=$(echo "$container_definitions_json" | jq --arg ENVVAR "${var_val[0]}" --arg ENVVAL "${var_val[1]}" \
+      ".[${image_idx}].environment += [{\"name\": \$ENVVAR, \"value\": \$ENVVAL}]"
+    )
+  done
   image_idx=$((image_idx+1))
 done
 
