@@ -118,13 +118,16 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
   export BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_0="FOO=bar"
   export BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_1="BAZ=bing"
 
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/multiple-images.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/multiple-images.json
 
-  # first command stubbed saves the container definition to ${_TMP_DIR}/container_definition for later review and manipulation
+  # first command stubbed saves the container definition to ${TMP_DIR}/container_definition for later review and manipulation
+  # we should be stubbing a lot more calls, but we don't care about those so let the stubbing fail
   stub aws \
-    "ecs register-task-definition --family hello-world --container-definitions '*' : echo \"\$6\" > ${_TMP_DIR}/container_definition ; echo '{\"taskDefinition\":{\"revision\":1}}'"
+    "ecs register-task-definition --family hello-world --container-definitions \* : echo \"\$6\" > ${_TMP_DIR}/container_definition ; echo '{\"taskDefinition\":{\"revision\":1}}'"
 
   run "$PWD/hooks/command"
+
+  assert_success
 
   # there is no assert_success because we are just checking that the definition was updated accordingly
   assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[0].environment[0].name') 'FOO'
