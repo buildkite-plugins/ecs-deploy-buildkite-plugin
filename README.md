@@ -18,7 +18,7 @@ steps:
       - ecs-deploy#v1.4.1:
           cluster: "my-ecs-cluster"
           service: "my-service"
-          task-definition: "examples/hello-world.json"
+          container-definitions: "examples/hello-world.json"
           task-family: "hello-world"
           image: "${ECR_REPOSITORY}/hello-world:${BUILDKITE_BUILD_NUMBER}"
 ```
@@ -37,11 +37,62 @@ The name of the ECS service.
 
 Example: `"my-service"`
 
+### `container-definitions`
+
+The file path to the ECS container definition JSON file. This JSON file must be an array of objects, each corresponding to one of the images you defined in the `image` parameter.
+
+Example: `"ecs/containers.json"`
+```json
+[
+    {
+        "essential": true,
+        "image": "amazon/amazon-ecs-sample",
+        "memory": 100,
+        "name": "sample",
+        "portMappings": [
+            {
+                "containerPort": 80,
+                "hostPort": 80
+            }
+        ]
+    },
+    {
+        "essential": true,
+        "image": "amazon/amazon-ecs-sample",
+        "memory": 100,
+        "name": "sample",
+        "portMappings": [
+            {
+                "containerPort": 80,
+                "hostPort": 80
+            }
+        ]
+    }
+]
+```
+
 ### `task-definition`
 
-The file path to the ECS task definition JSON file.
+The file path to the ECS task definition JSON file. Parameters specified in this file will be overridden by other arguments if set. Setting the `containers` property in this file will have no effect, define those parameters in `container-definitions`
 
 Example: `"ecs/task.json"`
+```json
+{
+  "networkMode": "awsvpc"
+}
+```
+
+### `service-definition`
+
+The file path to the ECS service definition JSON file. Parameters specified in this file will be overridden by other arguments if set, e.g. `cluster`, `desired-count`, etc. Note that currently this json input will only be used when creating the service, NOT when updating it.
+
+Example: `"ecs/service.json"`
+```json
+{
+  "schedulingStrategy": "DAEMON",
+  "propagateTags": "TASK_DEFINITION"
+}
+```
 
 ### `task-family`
 

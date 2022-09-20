@@ -8,11 +8,15 @@ configuration:
   properties:
     cluster:
       type: string
+    container-definitions:
+      type: string
     service:
       type: string
     task-definition:
       type: string
     task-family:
+      type: string
+    service-definition:
       type: string
     image:
       type: [ string, array ]
@@ -37,6 +41,6 @@ configuration:
   required:
     - cluster
     - service
-    - task-definition
+    - container-definitions
     - task-family
     - image

@@ -16,6 +16,8 @@ setup() {
 # export AWS_STUB_DEBUG=/dev/tty
 
 expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hello-world:llamas",\n    "memory": 100,\n    "name": "sample",\n    "portMappings": [\n      {\n        "containerPort": 80,\n        "hostPort": 80\n      }\n    ]\n  }\n]'
+expected_task_definition='{\n    "networkMode": "awsvpc"\n}'
+expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propagateTags": "TASK_DEFINITION"\n}'
 
 @test "Run a deploy when service exists" {
   export BUILDKITE_BUILD_NUMBER=1
@@ -23,7 +25,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'${expected_container_definition}' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
@@ -41,7 +43,36 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
+}
+
+@test "Run a deploy with a task definition json file" {
+  export BUILDKITE_BUILD_NUMBER=1
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/task-definition.json
+
+  stub aws \
+    "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' --cli-input-json $'$expected_task_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo '1'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
+    "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
+    "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
+    "ecs describe-services --cluster my-cluster --service my-service : echo ok"
+
+  run "$PWD/hooks/command"
+
+  assert_success
+  assert_output --partial "Service is up 🚀"
+
+  unstub aws
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
 }
 
@@ -52,8 +83,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_0=hello-world:llamas
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_1=hello-world:alpacas
-
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/multiple-images.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/multiple-images.json
 
   expected_multiple_container_definition='[\n  {\n    "essential": true,\n    "image": "hello-world:llamas",\n    "memory": 100,\n    "name": "sample",\n    "portMappings": [\n      {\n        "containerPort": 80,\n        "hostPort": 80\n      }\n    ]\n  },\n  {\n    "essential": true,\n    "image": "hello-world:alpacas",\n    "memory": 100,\n    "name": "sample",\n    "portMappings": [\n      {\n        "containerPort": 80,\n        "hostPort": 80\n      }\n    ]\n  }\n]'
 
@@ -73,7 +103,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_0
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_1
 }
@@ -88,13 +118,16 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_0="FOO=bar"
   export BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_1="BAZ=bing"
 
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/multiple-images.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/multiple-images.json
 
-  # first command stubbed saves the container definition to ${_TMP_DIR}/container_definition for later review and manipulation
+  # first command stubbed saves the container definition to ${TMP_DIR}/container_definition for later review and manipulation
+  # we should be stubbing a lot more calls, but we don't care about those so let the stubbing fail
   stub aws \
-    "ecs register-task-definition --family hello-world --container-definitions '*' : echo \"\$6\" > ${_TMP_DIR}/container_definition ; echo '{\"taskDefinition\":{\"revision\":1}}'"
+    "ecs register-task-definition --family hello-world --container-definitions \* : echo \"\$6\" > ${_TMP_DIR}/container_definition ; echo '{\"taskDefinition\":{\"revision\":1}}'"
 
   run "$PWD/hooks/command"
+
+  assert_success
 
   # there is no assert_success because we are just checking that the definition was updated accordingly
   assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[0].environment[0].name') 'FOO'
@@ -123,12 +156,12 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 : echo -n ''" \
+    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --cli-input-json '{}' : echo -n ''" \
     "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
@@ -142,9 +175,41 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
+}
+
+
+@test "Run a deploy with a new service with definition" {
+  export BUILDKITE_BUILD_NUMBER=1
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION=examples/service-definition.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
+
+  stub aws \
+    "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
+    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --cli-input-json $'$expected_service_definition' : echo -n ''" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
+    "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
+    "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
+    "ecs describe-services --cluster my-cluster --service my-service : echo ok"
+
+  run "$PWD/hooks/command"
+
+  assert_success
+  assert_output --partial "Service is up 🚀"
+
+  unstub aws
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
 }
 
 @test "Run a deploy with task role" {
@@ -153,7 +218,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN=arn:aws:iam::012345678910:role/world
 
   stub aws \
@@ -172,7 +237,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN
 }
@@ -183,7 +248,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP=arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME=nginx
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT=80
@@ -193,7 +258,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --load-balancers targetGroupArn=arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc,containerName=nginx,containerPort=80 : echo -n ''" \
+    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --load-balancers targetGroupArn=arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc,containerName=nginx,containerPort=80 --cli-input-json '{}' : echo -n ''" \
     "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo '$alb_config'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
@@ -207,7 +272,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT
@@ -219,7 +284,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME=nginx-elb
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME=nginx
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT=80
@@ -227,7 +292,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --load-balancers loadBalancerName=nginx-elb,containerName=nginx,containerPort=80 : echo -n ''" \
+    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --load-balancers loadBalancerName=nginx-elb,containerName=nginx,containerPort=80 --cli-input-json '{}' : echo -n ''" \
     "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo '[{\"loadBalancers\":[{\"loadBalancerName\": \"nginx-elb\",\"containerName\": \"nginx\",\"containerPort\": 80}]}]'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
@@ -241,7 +306,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME
@@ -253,7 +318,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE=arn:aws:iam::012345678910:role/world
 
   stub aws \
@@ -272,7 +337,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE
 }
@@ -283,13 +348,13 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/hello-world.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION="0/100"
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=100,minimumHealthyPercent=0 : echo -n ''" \
+    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=100,minimumHealthyPercent=0 --cli-input-json '{}' : echo -n ''" \
     "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
@@ -303,7 +368,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   unstub aws
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION
 }
@@ -314,7 +379,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=tests/incorrect-container-definition.json
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=tests/incorrect-container-definition.json
 
   run "$PWD/hooks/command"
   assert_failure
@@ -322,7 +387,7 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
 
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
   unset BUILDKITE_BUILD_NUMBER
 }

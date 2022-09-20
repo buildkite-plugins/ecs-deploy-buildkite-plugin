@@ -31,7 +31,9 @@ images=()
 while read -r line ; do
   [[ -n "$line" ]] && images+=("$line")
 done <<< "$(plugin_read_list IMAGE)"
-task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION?}
+task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION:-""}
+service_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION:-""}
+container_definitions=${BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS?}
 desired_count=${BUILDKITE_PLUGIN_ECS_DEPLOY_DESIRED_COUNT:-"1"}
 task_role_arn=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN:-""}
 target_group=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP:-""}
@@ -60,9 +62,9 @@ min_max_percent=(${deployment_config//\// })
 min_deploy_perc=${min_max_percent[0]}
 max_deploy_perc=${min_max_percent[1]}
 
-if [[ $(jq '. | keys |first' "$task_definition") != "0" ]]; then
+if [[ $(jq '. | keys |first' "$container_definitions") != "0" ]]; then
     echo "^^^"
-    echo "Invalid Task Definition"
+    echo "Invalid Container Definitions"
     echo 'JSON definition should be in the format of [{"image": "..."}]'
     exit 1
 fi
@@ -74,6 +76,11 @@ function create_service() {
     local desired_count=$4
     local target_group_arguments
     target_group_arguments=$(generate_target_group_arguments "$5" "$6" "$7")
+    
+    local service_definition_json="{}"
+    if [[ -n "${service_definition}" ]]; then
+      service_definition_json=$(cat "${service_definition}")
+    fi
 
     # shellcheck disable=SC2016
     service_defined=$(aws ecs describe-services --cluster "$cluster_name" --service "$service_name" --query 'services[?status==`ACTIVE`].status' --output text |wc -l)
@@ -86,7 +93,8 @@ function create_service() {
         --task-definition "$task_definition" \
         --desired-count "$desired_count" \
         --deployment-configuration "maximumPercent=${max_deploy_perc},minimumHealthyPercent=${min_deploy_perc}" \
-        $target_group_arguments
+        $target_group_arguments \
+        --cli-input-json "$service_definition_json"
     fi
 }
 
@@ -115,7 +123,7 @@ function generate_target_group_arguments() {
 
 ## This is the template definition of your containers
 image_idx=0
-container_definitions_json=$(cat "${task_definition}")
+container_definitions_json=$(cat "${container_definitions}")
 for image in "${images[@]}"; do
   container_definitions_json=$(echo "$container_definitions_json" | jq --arg IMAGE "$image" \
   ".[${image_idx}].image=\$IMAGE"
@@ -148,6 +156,13 @@ fi
 if [[ -n "${execution_role}" ]]; then
     register_command+=" --execution-role-arn ${execution_role}"
 fi
+
+if [[ -n "${task_definition}" ]]; then
+    task_definition_json=$(cat "${task_definition}")
+    register_command+=" --cli-input-json '${task_definition_json}'"
+fi
+
+echo "--- :ecs: register command:"
 
 json_output=$(eval "$register_command")
 register_exit_code=$?
