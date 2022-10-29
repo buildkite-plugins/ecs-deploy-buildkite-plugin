@@ -1,16 +1,6 @@
 #!/usr/bin/env bats
 
-load '/usr/local/lib/bats/load.bash'
-
-setup() {
-  # emulate the upcoming bats `setup_file`
-  # https://github.com/bats-core/bats-core/issues/39#issuecomment-377015447
-  if [[ $BATS_TEST_NUMBER -eq 1 ]]; then
-    # output to fd 3, prefixed with hashes, for TAP compliance:
-    # https://github.com/bats-core/bats-core/blob/v1.2.0/README.md#printing-to-the-terminal
-    apk --no-cache add jq | sed -e 's/^/# /' >&3
-  fi
-}
+load "${BATS_PLUGIN_PATH}/load.bash"
 
 # Uncomment to enable stub debug output:
 # export AWS_STUB_DEBUG=/dev/tty
@@ -29,8 +19,8 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'${expected_container_definition}' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\"ACTIVE\"].status' --output text : echo '1'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\"ACTIVE\"]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
@@ -58,8 +48,8 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' --cli-input-json $'$expected_task_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\"ACTIVE\"].status' --output text : echo '1'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\"ACTIVE\"]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
@@ -89,8 +79,8 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_multiple_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\"ACTIVE\"].status' --output text : echo '1'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\"ACTIVE\"]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
@@ -160,9 +150,9 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\"ACTIVE\"].status' --output text : echo -n ''" \
     "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --cli-input-json '{}' : echo -n ''" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\"ACTIVE\"]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
@@ -192,9 +182,9 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\"ACTIVE\"].status' --output text : echo -n ''" \
     "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --cli-input-json $'$expected_service_definition' : echo -n ''" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\"ACTIVE\"]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
@@ -223,8 +213,8 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' --task-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\"ACTIVE\"].status' --output text : echo '1'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\"ACTIVE\"]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
@@ -257,9 +247,9 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\"ACTIVE\"].status' --output text : echo -n ''" \
     "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --load-balancers targetGroupArn=arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc,containerName=nginx,containerPort=80 --cli-input-json '{}' : echo -n ''" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo '$alb_config'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\"ACTIVE\"]' : echo '$alb_config'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
@@ -291,9 +281,9 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\"ACTIVE\"].status' --output text : echo -n ''" \
     "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --load-balancers loadBalancerName=nginx-elb,containerName=nginx,containerPort=80 --cli-input-json '{}' : echo -n ''" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo '[{\"loadBalancers\":[{\"loadBalancerName\": \"nginx-elb\",\"containerName\": \"nginx\",\"containerPort\": 80}]}]'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\"ACTIVE\"]' : echo '[{\"loadBalancers\":[{\"loadBalancerName\": \"nginx-elb\",\"containerName\": \"nginx\",\"containerPort\": 80}]}]'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
@@ -323,8 +313,8 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' --execution-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\"ACTIVE\"].status' --output text : echo '1'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\"ACTIVE\"]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
@@ -353,9 +343,9 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\`ACTIVE\`].status' --output text : echo -n ''" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\"ACTIVE\"].status' --output text : echo -n ''" \
     "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=100,minimumHealthyPercent=0 --cli-input-json '{}' : echo -n ''" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\`ACTIVE\`]' : echo 'null'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\"ACTIVE\"]' : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service : echo ok"
