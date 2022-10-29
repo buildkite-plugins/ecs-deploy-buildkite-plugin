@@ -1,39 +1,25 @@
 #!/bin/bash
 set -euo pipefail
 
-# Reads either a value or a list from plugin config
-function plugin_read_list() {
-  prefix_read_list "BUILDKITE_PLUGIN_ECS_DEPLOY_$1"
-}
+DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 
-# Reads either a value or a list from the given env prefix
-function prefix_read_list() {
-  local prefix="$1"
-  local parameter="${prefix}_0"
+# shellcheck source=lib/buildkite.bash
+. "$DIR/../lib/buildkite.bash"
 
-  if [[ -n "${!parameter:-}" ]]; then
-    local i=0
-    local parameter="${prefix}_${i}"
-    while [[ -n "${!parameter:-}" ]]; do
-      echo "${!parameter}"
-      i=$((i+1))
-      parameter="${prefix}_${i}"
-    done
-  elif [[ -n "${!prefix:-}" ]]; then
-    echo "${!prefix}"
-  fi
-}
+# mandatory configurations
+cluster=${BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER?Missing cluster}
+container_definitions=${BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS?Missing container definitions}
+task_family=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY?Missing task family}
+service_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE?Missing service name}
 
-cluster=${BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER?}
-task_family=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY?}
-service_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE?}
 images=()
 while read -r line ; do
   [[ -n "$line" ]] && images+=("$line")
 done <<< "$(plugin_read_list IMAGE)"
+
+# optional configurations
 task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION:-""}
 service_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION:-""}
-container_definitions=${BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS?}
 desired_count=${BUILDKITE_PLUGIN_ECS_DEPLOY_DESIRED_COUNT:-"1"}
 task_role_arn=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN:-""}
 target_group=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP:-""}
