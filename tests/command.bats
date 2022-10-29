@@ -31,10 +31,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
   assert_output --partial "Service is up 🚀"
 
   unstub aws
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
 }
 
 @test "Run a deploy with a task definition json file" {
@@ -60,10 +56,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
   assert_output --partial "Service is up 🚀"
 
   unstub aws
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
 }
 
 @test "Run a deploy with multiple images" {
@@ -91,11 +83,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
   assert_output --partial "Service is up 🚀"
 
   unstub aws
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_0
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_1
 }
 
 @test "Add env vars on multiple images" {
@@ -131,13 +118,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 
   # as the aws command is called more times than stubbed, it is unstubbed automatically
   # unstub aws
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_0
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_1
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_0
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_1
 }
 
 @test "Run a deploy when service does not exist" {
@@ -163,11 +143,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
   assert_output --partial "Service is up 🚀"
 
   unstub aws
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
 }
 
 
@@ -195,11 +170,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
   assert_output --partial "Service is up 🚀"
 
   unstub aws
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
 }
 
 @test "Run a deploy with task role" {
@@ -225,11 +195,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
   assert_output --partial "Service is up 🚀"
 
   unstub aws
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN
 }
 
 @test "Run a deploy with target group" {
@@ -260,12 +225,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
   assert_output --partial "Service is up 🚀"
 
   unstub aws
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT
 }
 
 @test "Run a deploy with ELBv1" {
@@ -294,12 +253,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
   assert_output --partial "Service is up 🚀"
 
   unstub aws
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME
 }
 
 @test "Run a deploy with execution role" {
@@ -325,11 +278,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
   assert_output --partial "Service is up 🚀"
 
   unstub aws
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE
 }
 
 @test "Create a service with deployment configuration" {
@@ -356,11 +304,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
   assert_output --partial "Service is up 🚀"
 
   unstub aws
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION
 }
 
 @test "Run a deploy when the container definition is incorrect" {
@@ -374,10 +317,4 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
   run "$PWD/hooks/command"
   assert_failure
   assert_output --partial 'JSON definition should be in the format of [{"image": "..."}]'
-
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE
-  unset BUILDKITE_BUILD_NUMBER
 }
