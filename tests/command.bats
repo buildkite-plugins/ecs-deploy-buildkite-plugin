@@ -10,7 +10,6 @@ expected_task_definition='{\n    "networkMode": "awsvpc"\n}'
 expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propagateTags": "TASK_DEFINITION"\n}'
 
 @test "Run a deploy when service exists" {
-  export BUILDKITE_BUILD_NUMBER=1
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
@@ -34,7 +33,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy with a task definition json file" {
-  export BUILDKITE_BUILD_NUMBER=1
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
@@ -59,7 +57,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy with multiple images" {
-  export BUILDKITE_BUILD_NUMBER=1
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
@@ -86,7 +83,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Add env vars on multiple images" {
-  export BUILDKITE_BUILD_NUMBER=1
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
@@ -121,7 +117,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy when service does not exist" {
-  export BUILDKITE_BUILD_NUMBER=1
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
@@ -147,7 +142,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 
 
 @test "Run a deploy with a new service with definition" {
-  export BUILDKITE_BUILD_NUMBER=1
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION=examples/service-definition.json
@@ -173,7 +167,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy with task role" {
-  export BUILDKITE_BUILD_NUMBER=1
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
@@ -198,7 +191,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy with target group" {
-  export BUILDKITE_BUILD_NUMBER=1
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
@@ -228,7 +220,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy with ELBv1" {
-  export BUILDKITE_BUILD_NUMBER=1
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
@@ -256,7 +247,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy with execution role" {
-  export BUILDKITE_BUILD_NUMBER=1
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
@@ -281,7 +271,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Create a service with deployment configuration" {
-  export BUILDKITE_BUILD_NUMBER=1
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
@@ -307,7 +296,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy when the container definition is incorrect" {
-  export BUILDKITE_BUILD_NUMBER=1
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
