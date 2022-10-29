@@ -120,14 +120,14 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
   assert_success
 
   # there is no assert_success because we are just checking that the definition was updated accordingly
-  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[0].environment[0].name') 'FOO'
-  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[0].environment[0].value') 'bar'
-  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[1].environment[0].name') 'FOO'
-  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[1].environment[0].value') 'bar'
-  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[0].environment[1].name') 'BAZ'
-  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[0].environment[1].value') 'bing'
-  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[1].environment[1].name') 'BAZ'
-  assert_equal $(cat ${_TMP_DIR}/container_definition | jq -r '.[1].environment[1].value') 'bing'
+  assert_equal "$(jq -r '.[0].environment[0].name'  "${_TMP_DIR}"/container_definition)" 'FOO'
+  assert_equal "$(jq -r '.[0].environment[0].value' "${_TMP_DIR}"/container_definition)" 'bar'
+  assert_equal "$(jq -r '.[1].environment[0].name'  "${_TMP_DIR}"/container_definition)" 'FOO'
+  assert_equal "$(jq -r '.[1].environment[0].value' "${_TMP_DIR}"/container_definition)" 'bar'
+  assert_equal "$(jq -r '.[0].environment[1].name'  "${_TMP_DIR}"/container_definition)" 'BAZ'
+  assert_equal "$(jq -r '.[0].environment[1].value' "${_TMP_DIR}"/container_definition)" 'bing'
+  assert_equal "$(jq -r '.[1].environment[1].name'  "${_TMP_DIR}"/container_definition)" 'BAZ'
+  assert_equal "$(jq -r '.[1].environment[1].value' "${_TMP_DIR}"/container_definition)" 'bing'
 
   # as the aws command is called more times than stubbed, it is unstubbed automatically
   # unstub aws
