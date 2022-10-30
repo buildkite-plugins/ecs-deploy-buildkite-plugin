@@ -3,8 +3,8 @@ set -euo pipefail
 
 DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 
-# shellcheck source=lib/buildkite.bash
-. "$DIR/../lib/buildkite.bash"
+# shellcheck source=lib/plugin.bash
+. "$DIR/../lib/plugin.bash"
 
 # mandatory configurations
 cluster=${BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER?Missing cluster}
