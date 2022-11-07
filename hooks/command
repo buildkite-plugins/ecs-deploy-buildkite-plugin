@@ -25,12 +25,12 @@ load_balancer_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME:-""}
 target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
 
-if ! plugin_read_list_into_result "ENV" && [ "${BASH_VERSINFO[0]}" -eq 4 ] && [ "${BASH_VERSINFO[1]}" -eq 3 ]; then
-  echo ':boom: No environment variables found and using Bash version 4.3'
-  echo 'Empty arrays behave differently in this version that will make this plugin fail'
-  exit 1
+# necessary for compatibility with bash 4.3
+if plugin_read_list_into_result "ENV"; then
+  env_vars=("${result[@]}")
+else
+  env_vars=()
 fi
-env_vars=("${result[@]}")
 
 aws_default_args=()
 region=${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-""}
@@ -124,20 +124,19 @@ for image in "${images[@]}"; do
     echo "$container_definitions_json" \
     | jq --arg IMAGE "$image" ".[${image_idx}].image=\$IMAGE"
   )
-  image_idx=$((image_idx+1))
-done
 
-## This adds the env vars to each container
-image_idx=0
-for image in "${images[@]}"; do
-  for env_var in "${env_vars[@]}"; do
-    IFS="=" read -r -a var_val <<< "${env_var}"
-    container_definitions_json=$(
-      echo "$container_definitions_json" \
-      | jq --arg ENVVAR "${var_val[0]}" --arg ENVVAL "${var_val[1]}" \
-        ".[${image_idx}].environment += [{\"name\": \$ENVVAR, \"value\": \$ENVVAL}]"
-    )
-  done
+  # this check is only necessary to be compatible with bash 4.3 (see issue #81)
+  if [ "${#env_vars[@]}" -gt 0 ]; then
+    for env_var in "${env_vars[@]}"; do
+      IFS="=" read -r -a var_val <<< "${env_var}"
+      container_definitions_json=$(
+        echo "$container_definitions_json" \
+        | jq --arg ENVVAR "${var_val[0]}" --arg ENVVAL "${var_val[1]}" \
+          ".[${image_idx}].environment += [{\"name\": \$ENVVAR, \"value\": \$ENVVAL}]"
+      )
+    done
+  fi
+
   image_idx=$((image_idx+1))
 done
 

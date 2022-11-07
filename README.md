@@ -23,12 +23,6 @@ steps:
           image: "${ECR_REPOSITORY}/hello-world:${BUILDKITE_BUILD_NUMBER}"
 ```
 
-## Known issues
-
-### `unbound variable env_vars[@]`
-
-Any usage of this plugin that doesn't have environment variables set will fail with an `unbound variable` error if you are using **Bash version 4.3**. You can see issue #81 for more information, but any other Bash version will not cause that behaviour.
-
 ## Options
 
 ### `cluster`
