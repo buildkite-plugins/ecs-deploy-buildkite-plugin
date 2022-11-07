@@ -25,7 +25,11 @@ load_balancer_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME:-""}
 target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
 
-plugin_read_list_into_result "ENV" || true  # if no conf found, don't fail
+if ! plugin_read_list_into_result "ENV" && [ "${BASH_VERSINFO[0]}" -eq 4 ] && [ "${BASH_VERSINFO[1]}" -eq 3 ]; then
+  echo ':boom: No environment variables found and using Bash version 4.3'
+  echo 'Empty arrays behave differently in this version that will make this plugin fail'
+  exit 1
+fi
 env_vars=("${result[@]}")
 
 aws_default_args=()
