@@ -1,68 +1,48 @@
 #!/bin/bash
 set -euo pipefail
 
-# Reads either a value or a list from plugin config
-function plugin_read_list() {
-  prefix_read_list "BUILDKITE_PLUGIN_ECS_DEPLOY_$1"
-}
+DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 
-# Reads either a value or a list from the given env prefix
-function prefix_read_list() {
-  local prefix="$1"
-  local parameter="${prefix}_0"
+# shellcheck source=lib/plugin.bash
+. "$DIR/../lib/plugin.bash"
 
-  if [[ -n "${!parameter:-}" ]]; then
-    local i=0
-    local parameter="${prefix}_${i}"
-    while [[ -n "${!parameter:-}" ]]; do
-      echo "${!parameter}"
-      i=$((i+1))
-      parameter="${prefix}_${i}"
-    done
-  elif [[ -n "${!prefix:-}" ]]; then
-    echo "${!prefix}"
-  fi
-}
+# mandatory configurations
+cluster=${BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER?Missing cluster}
+container_definitions=${BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS?Missing container definitions}
+task_family=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY?Missing task family}
+service_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE?Missing service name}
 
-cluster=${BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER?}
-task_family=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY?}
-service_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE?}
-images=()
-while read -r line ; do
-  [[ -n "$line" ]] && images+=("$line")
-done <<< "$(plugin_read_list IMAGE)"
-task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION:-""}
-service_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION:-""}
-container_definitions=${BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS?}
+if ! plugin_read_list_into_result "IMAGE"; then
+  echo ":boom: Missing image to use"
+  exit 1
+fi
+images=("${result[@]}")
+
+# optional configurations
 desired_count=${BUILDKITE_PLUGIN_ECS_DEPLOY_DESIRED_COUNT:-"1"}
-task_role_arn=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN:-""}
 target_group=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP:-""}
 load_balancer_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME:-""}
 target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
-execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
-region=${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-""}
-env_vars=()
-while read -r line ; do
-  [[ -n "$line" ]] && env_vars+=("$line")
-done <<< "$(plugin_read_list ENV)"
 
-if [[ $region != "" ]]; then
-  # shellcheck disable=SC2034 # Used by the aws cli
-  AWS_DEFAULT_REGION=${region}
+# necessary for compatibility with bash 4.3
+if plugin_read_list_into_result "ENV"; then
+  env_vars=("${result[@]}")
+else
+  env_vars=()
+fi
+
+aws_default_args=()
+region=${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-""}
+if [[ -n "${region}" ]]; then
+  aws_default_args+=(--region "${region}")
 fi
 
 # Resolve any runtime environment variables it has
 target_group=$(eval "echo $target_group")
 load_balancer_name=$(eval "echo $load_balancer_name")
 
-deployment_config=${BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION:-"100/200"}
-# shellcheck disable=SC2206
-min_max_percent=(${deployment_config//\// })
-min_deploy_perc=${min_max_percent[0]}
-max_deploy_perc=${min_max_percent[1]}
-
-if [[ $(jq '. | keys |first' "$container_definitions") != "0" ]]; then
+if [[ $(jq '. | keys | first' "$container_definitions") != "0" ]]; then
     echo "^^^"
     echo "Invalid Container Definitions"
     echo 'JSON definition should be in the format of [{"image": "..."}]'
@@ -74,26 +54,42 @@ function create_service() {
     local task_definition=$2
     local service_name=$3
     local desired_count=$4
-    local target_group_arguments
-    target_group_arguments=$(generate_target_group_arguments "$5" "$6" "$7")
-    
     local service_definition_json="{}"
+    local target_group_arguments
+
+    generate_target_group_arguments "$5" "$6" "$7"
+    target_group_arguments=("${result[@]}")  # copying the array
+
+    service_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION:-""}
     if [[ -n "${service_definition}" ]]; then
       service_definition_json=$(cat "${service_definition}")
     fi
 
-    # shellcheck disable=SC2016
-    service_defined=$(aws ecs describe-services --cluster "$cluster_name" --service "$service_name" --query 'services[?status==`ACTIVE`].status' --output text |wc -l)
+    service_defined=$(
+      aws ecs describe-services \
+        "${aws_default_args[@]}" \
+        --cluster "$cluster_name" \
+        --service "$service_name" \
+        --query 'services[?status=="ACTIVE"].status' \
+        --output text \
+        | wc -l
+    )
     if [[ $service_defined -eq 0 ]]; then
-        echo "--- :ecs: Creating a Service $service_name in cluster $cluster_name"
-        # shellcheck disable=SC2086
-        aws ecs create-service \
+      echo "--- :ecs: Creating a Service $service_name in cluster $cluster_name"
+
+      deployment_config=${BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION:-"100/200"}
+      IFS="/" read -r -a min_max_percent <<< "${deployment_config}"
+      min_deploy_perc=${min_max_percent[0]}
+      max_deploy_perc=${min_max_percent[1]}
+
+      aws ecs create-service \
+        "${aws_default_args[@]}" \
         --cluster "$cluster_name" \
         --service-name "$service_name" \
         --task-definition "$task_definition" \
         --desired-count "$desired_count" \
         --deployment-configuration "maximumPercent=${max_deploy_perc},minimumHealthyPercent=${min_deploy_perc}" \
-        $target_group_arguments \
+        "${target_group_arguments[@]}" \
         --cli-input-json "$service_definition_json"
     fi
 }
@@ -102,7 +98,7 @@ function generate_target_group_arguments() {
     local target_group=$1
     local target_container=$2
     local target_port=$3
-    local target_group_arguments=""
+    result=()
     if [[ -n $target_container ]] && [[ -n $target_port ]]; then
       local load_balancer_ref=""
       if [[ -n $target_group ]]; then
@@ -111,60 +107,65 @@ function generate_target_group_arguments() {
         load_balancer_ref="loadBalancerName=${load_balancer_name}"
       else
         echo "+++ ^^^"
-        # shellcheck disable=SC2016
-        echo '+++ You must specify either `target-group` or `load-balancer-name`'
+        echo '+++ You must specify either target-group or load-balancer-name'
         exit 1
       fi
 
-      target_group_arguments="--load-balancers ${load_balancer_ref},containerName=${target_container},containerPort=${target_port}"
+      result+=(--load-balancers "${load_balancer_ref},containerName=${target_container},containerPort=${target_port}")
     fi
-    echo "$target_group_arguments"
+    return 0
 }
 
 ## This is the template definition of your containers
 image_idx=0
 container_definitions_json=$(cat "${container_definitions}")
 for image in "${images[@]}"; do
-  container_definitions_json=$(echo "$container_definitions_json" | jq --arg IMAGE "$image" \
-  ".[${image_idx}].image=\$IMAGE"
+  container_definitions_json=$(
+    echo "$container_definitions_json" \
+    | jq --arg IMAGE "$image" ".[${image_idx}].image=\$IMAGE"
   )
-  image_idx=$((image_idx+1))
-done
 
-## This adds the env vars to each container
-image_idx=0
-for image in "${images[@]}"; do
-  for env_var in "${env_vars[@]}"; do
-    # shellcheck disable=SC2206
-    var_val=(${env_var//=/ })
-    container_definitions_json=$(echo "$container_definitions_json" | jq --arg ENVVAR "${var_val[0]}" --arg ENVVAL "${var_val[1]}" \
-      ".[${image_idx}].environment += [{\"name\": \$ENVVAR, \"value\": \$ENVVAL}]"
-    )
-  done
+  # this check is only necessary to be compatible with bash 4.3 (see issue #81)
+  if [ "${#env_vars[@]}" -gt 0 ]; then
+    for env_var in "${env_vars[@]}"; do
+      IFS="=" read -r -a var_val <<< "${env_var}"
+      container_definitions_json=$(
+        echo "$container_definitions_json" \
+        | jq --arg ENVVAR "${var_val[0]}" --arg ENVVAL "${var_val[1]}" \
+          ".[${image_idx}].environment += [{\"name\": \$ENVVAR, \"value\": \$ENVVAL}]"
+      )
+    done
+  fi
+
   image_idx=$((image_idx+1))
 done
 
 echo "--- :ecs: Registering new task definition for ${task_family}"
-register_command="aws ecs register-task-definition \
-    --family ${task_family} \
-    --container-definitions '$container_definitions_json'"
+register_command=(aws ecs register-task-definition
+    "${aws_default_args[@]}"
+    --family "${task_family}"
+    --container-definitions "${container_definitions_json}"
+)
 
+task_role_arn=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN:-""}
 if [[ -n "${task_role_arn}" ]]; then
-    register_command+=" --task-role-arn ${task_role_arn}"
+    register_command+=(--task-role-arn "${task_role_arn}")
 fi
 
+execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
 if [[ -n "${execution_role}" ]]; then
-    register_command+=" --execution-role-arn ${execution_role}"
+    register_command+=(--execution-role-arn "${execution_role}")
 fi
 
+task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION:-""}
 if [[ -n "${task_definition}" ]]; then
     task_definition_json=$(cat "${task_definition}")
-    register_command+=" --cli-input-json '${task_definition_json}'"
+    register_command+=(--cli-input-json "${task_definition_json}")
 fi
 
 echo "--- :ecs: register command:"
 
-json_output=$(eval "$register_command")
+json_output=$("${register_command[@]}")
 register_exit_code=$?
 
 if [[ $register_exit_code -ne 0 ]] ; then
@@ -179,8 +180,7 @@ echo "Registered ${task_family}:${task_revision}"
 # Create service if it doesn't already exist
 create_service "$cluster" "${task_family}:${task_revision}" "$service_name" "$desired_count" "$target_group" "$target_container" "$target_port"
 
-# shellcheck disable=SC2016
-lb_config=$(aws ecs describe-services --cluster "$cluster" --services "$service_name" --query 'services[?status==`ACTIVE`]' |jq -r '.[0].loadBalancers[0]')
+lb_config=$(aws ecs describe-services --cluster "$cluster" --services "$service_name" --query 'services[?status=="ACTIVE"]' | jq -r '.[0].loadBalancers[0]')
 error="+++ ^^^
 +++ Cannot update a service to add/remove a load balancer. First delete the service and then run again, or rename the service to force a new one to be created"
 
@@ -195,19 +195,20 @@ fi
 if [[ "$lb_config" == "null" ]]; then
   # noop
   true
-elif [[ $(echo "$lb_config" |jq -r '.containerName') != "$target_container" ]] || [[ $(echo "$lb_config" |jq -r '.containerPort') -ne $target_port ]]; then
+elif [[ $(echo "$lb_config" | jq -r '.containerName') != "$target_container" ]] || [[ $(echo "$lb_config" | jq -r '.containerPort') -ne $target_port ]]; then
   echo "$error. Container config differs"
   exit 1
-elif [[ -n "$target_group" ]] && [[ $(echo "$lb_config" |jq -r '.targetGroupArn') != "$target_group" ]]; then
+elif [[ -n "$target_group" ]] && [[ $(echo "$lb_config" | jq -r '.targetGroupArn') != "$target_group" ]]; then
   echo "$error. ALB config differs"
   exit 1
-elif [[ -n "$load_balancer_name" ]] && [[ $(echo "$lb_config" |jq -r '.loadBalancerName') != "$load_balancer_name" ]]; then
+elif [[ -n "$load_balancer_name" ]] && [[ $(echo "$lb_config" | jq -r '.loadBalancerName') != "$load_balancer_name" ]]; then
   echo "$error. ELB config differs"
   exit 1
 fi
 
 echo "--- :ecs: Updating service for ${service_name}"
 aws ecs update-service \
+  "${aws_default_args[@]}" \
   --cluster "${cluster}" \
   --service "${service_name}" \
   --task-definition "${task_family}:${task_revision}"
@@ -216,11 +217,13 @@ aws ecs update-service \
 echo "--- :ecs: Waiting for services to stabilize"
 deploy_exitcode=0
 aws ecs wait services-stable \
+  "${aws_default_args[@]}" \
   --cluster "${cluster}" \
   --services "${service_name}" || deploy_exitcode=$?
 
 
 service_events=$(aws ecs describe-services \
+  "${aws_default_args[@]}" \
   --cluster "${cluster}" \
   --service "${service_name}" \
   --query 'services[].events' --output text)
