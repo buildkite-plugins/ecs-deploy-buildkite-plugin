@@ -51,15 +51,3 @@ load "${BATS_PLUGIN_PATH}/load.bash"
   assert_failure
   assert_output --partial "Missing image to use"
 }
-
-@test "Fail with missing container definition" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-
-  run "$PWD/hooks/command"
-
-  assert_failure
-  assert_output --partial "Missing container definition"
-}

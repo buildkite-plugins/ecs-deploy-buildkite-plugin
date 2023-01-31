@@ -263,3 +263,36 @@ setup() {
   assert_failure
   assert_output --partial 'JSON definition should be in the format of [{"image": "..."}]'
 }
+
+@test "Fail with missing container definition and aws failure" {
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
+
+  stub aws 'exit 1' # whatever we receive, fail
+
+  run "$PWD/hooks/command"
+
+  assert_failure
+  assert_output --partial "Could not get container definitions"
+
+  unstub aws
+}
+
+@test "Run normally with imported container definition" {
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
+
+  stub aws \
+    "ecs describe-task-definition --task-definition \* --query \* : cat examples/hello-world.json" \
+    "ecs register-task-definition --family hello-world --container-definitions $'${expected_container_definition}' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\"ACTIVE\"].status' --output text : echo '1'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\"ACTIVE\"]' : echo 'null'" \
+    "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
+    "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
+    "ecs describe-services --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
+
+  run "$PWD/hooks/command"
+
+  assert_success
+  assert_output --partial "Service is up 🚀"
+
+  unstub aws
+}
