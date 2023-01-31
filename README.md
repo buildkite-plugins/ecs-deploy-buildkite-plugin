@@ -25,19 +25,15 @@ steps:
 
 ## Options
 
-### `cluster`
+### Required
+
+#### `cluster`
 
 The name of the ECS cluster.
 
 Example: `"my-cluster"`
 
-### `service`
-
-The name of the ECS service.
-
-Example: `"my-service"`
-
-### `container-definitions`
+#### `container-definitions`
 
 The file path to the ECS container definition JSON file. This JSON file must be an array of objects, each corresponding to one of the images you defined in the `image` parameter.
 
@@ -71,36 +67,7 @@ Example: `"ecs/containers.json"`
 ]
 ```
 
-### `task-definition`
-
-The file path to the ECS task definition JSON file. Parameters specified in this file will be overridden by other arguments if set. Setting the `containers` property in this file will have no effect, define those parameters in `container-definitions`
-
-Example: `"ecs/task.json"`
-```json
-{
-  "networkMode": "awsvpc"
-}
-```
-
-### `service-definition`
-
-The file path to the ECS service definition JSON file. Parameters specified in this file will be overridden by other arguments if set, e.g. `cluster`, `desired-count`, etc. Note that currently this json input will only be used when creating the service, NOT when updating it.
-
-Example: `"ecs/service.json"`
-```json
-{
-  "schedulingStrategy": "DAEMON",
-  "propagateTags": "TASK_DEFINITION"
-}
-```
-
-### `task-family`
-
-The name of the task family.
-
-Example: `"my-task"`
-
-### `image`
+#### `image`
 
 The Docker image to deploy. This can be an array to substitute multiple images in a single container definition.
 
@@ -113,26 +80,31 @@ image:
   - "012345.dkr.ecr.us-east-1.amazonaws.com/nginx:123"
 ```
 
-### `task-role-arn` (optional)
+#### `service`
 
-An IAM ECS Task Role to assign to tasks.
-Requires the `iam:PassRole` permission for the ARN specified.
+The name of the ECS service.
 
-### `target-group` (optional)
+Example: `"my-service"`
 
-The Target Group ARN to map the service to.
+#### `task-family`
 
-Example: `"arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc"`
+The name of the task family.
 
-### `target-container-name` (optional)
+Example: `"my-task"`
 
-The Container Name to forward ALB requests to.
+### Optional
 
-### `target-container-port` (optional)
+#### `deployment-configuration` (optional)
 
-The Container Port to forward requests to.
+The minimum and maximum percentage of tasks that should be maintained during a deployment. Defaults to `100/200`
 
-### `execution-role` (optional)
+Example: `"0/100"`
+
+#### `env` (optional)
+
+An array of environment variables to add to *every* image's task definition
+
+#### `execution-role` (optional)
 
 The Execution Role ARN used by ECS to pull container images and secrets.
 
@@ -140,19 +112,51 @@ Example: `"arn:aws:iam::012345678910:role/execution-role"`
 
 Requires the `iam:PassRole` permission for the execution role.
 
-### `deployment-configuration` (optional)
-
-The minimum and maximum percentage of tasks that should be maintained during a deployment. Defaults to `100/200`
-
-Example: `"0/100"`
-
-### `region` (optional)
+#### `region` (optional)
 
 The region we deploy the ECS Service to.
 
-### `env` (optional)
+#### `service-definition`
 
-An array of environment variables to add to *every* image's task definition
+The file path to the ECS service definition JSON file. Parameters specified in this file will be overridden by other arguments if set, e.g. `cluster`, `desired-count`, etc. Note that currently this json input will only be used when creating the service, NOT when updating it.
+
+Example: `"ecs/service.json"`
+```json
+{
+  "schedulingStrategy": "DAEMON",
+  "propagateTags": "TASK_DEFINITION"
+}
+```
+
+#### `target-group` (optional)
+
+The Target Group ARN to map the service to.
+
+Example: `"arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc"`
+
+#### `target-container-name` (optional)
+
+The Container Name to forward ALB requests to.
+
+#### `target-container-port` (optional)
+
+The Container Port to forward requests to.
+
+##### `task-definition`
+
+The file path to the ECS task definition JSON file. Parameters specified in this file will be overridden by other arguments if set. Setting the `containers` property in this file will have no effect, define those parameters in `container-definitions`
+
+Example: `"ecs/task.json"`
+```json
+{
+  "networkMode": "awsvpc"
+}
+```
+
+#### `task-role-arn` (optional)
+
+An IAM ECS Task Role to assign to tasks.
+Requires the `iam:PassRole` permission for the ARN specified.
 
 ## AWS Roles
 
