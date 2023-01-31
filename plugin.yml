@@ -41,6 +41,5 @@ configuration:
   required:
     - cluster
     - service
-    - container-definitions
     - task-family
     - image

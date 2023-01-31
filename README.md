@@ -2,7 +2,7 @@
 
 A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) for deploying to [Amazon ECS](https://aws.amazon.com/ecs/).
 
-* Requires the aws cli tool be installed
+* Requires both `aws` and `jq` cli tools to be installed
 * Registers a new task definition based on a given JSON file ([`register-task-definition`](http://docs.aws.amazon.com/cli/latest/reference/ecs/register-task-definition.html))
 * Updates the ECS service to use the new task definition ([`update-service`](http://docs.aws.amazon.com/cli/latest/reference/ecs/update-service.html))
 * Waits for the service to stabilize ([`wait services-stable`](http://docs.aws.amazon.com/cli/latest/reference/ecs/wait/services-stable.html))
@@ -15,7 +15,7 @@ steps:
     concurrency_group: "my-service-deploy"
     concurrency: 1
     plugins:
-      - ecs-deploy#v2.0.1:
+      - ecs-deploy#v2.1.0:
           cluster: "my-ecs-cluster"
           service: "my-service"
           container-definitions: "examples/hello-world.json"
@@ -34,6 +34,8 @@ The name of the ECS cluster.
 Example: `"my-cluster"`
 
 #### `container-definitions`
+
+_Experimental:_ Since version 2.1.0 you can skip this parameter and the container definitions will be obtained off the existing (latest) task definition. If this does not work for you, please open an issue in this repository.
 
 The file path to the ECS container definition JSON file. This JSON file must be an array of objects, each corresponding to one of the images you defined in the `image` parameter.
 
