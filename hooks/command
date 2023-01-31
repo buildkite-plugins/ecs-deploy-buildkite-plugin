@@ -8,7 +8,6 @@ DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 
 # mandatory configurations
 cluster=${BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER?Missing cluster}
-container_definitions=${BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS?Missing container definitions}
 task_family=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY?Missing task family}
 service_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE?Missing service name}
 
@@ -24,6 +23,25 @@ target_group=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP:-""}
 load_balancer_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME:-""}
 target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
+
+if [ -z "${BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS:-}" ]; then
+  container_definitions=$(mktemp)
+  if ! aws ecs describe-task-definition --task-definition "${task_family}" --query 'taskDefinition.containerDefinitions' >"${container_definitions}"; then
+    echo ":boom: Could not get container definitions"
+    exit 1
+  fi
+  container_definitions_json=$(cat "${container_definitions}")
+  rm "${container_definitions}"
+else
+  container_definitions_json=$(cat "${BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS}")
+fi
+
+if [[ $(jq '. | keys | first' <<<"$container_definitions_json") != "0" ]]; then
+    echo "^^^"
+    echo "Invalid Container Definitions"
+    echo 'JSON definition should be in the format of [{"image": "..."}]'
+    exit 1
+fi
 
 # necessary for compatibility with bash 4.3
 if plugin_read_list_into_result "ENV"; then
@@ -41,16 +59,8 @@ fi
 target_group=$(eval "echo $target_group")
 load_balancer_name=$(eval "echo $load_balancer_name")
 
-if [[ $(jq '. | keys | first' "$container_definitions") != "0" ]]; then
-    echo "^^^"
-    echo "Invalid Container Definitions"
-    echo 'JSON definition should be in the format of [{"image": "..."}]'
-    exit 1
-fi
-
 ## This is the template definition of your containers
 image_idx=0
-container_definitions_json=$(cat "${container_definitions}")
 for image in "${images[@]}"; do
   container_definitions_json=$(
     echo "$container_definitions_json" \
