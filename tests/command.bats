@@ -9,12 +9,15 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
 expected_task_definition='{\n    "networkMode": "awsvpc"\n}'
 expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propagateTags": "TASK_DEFINITION"\n}'
 
-@test "Run a deploy when service exists" {
+setup() {
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
+}
+
+@test "Run a deploy when service exists" {
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'${expected_container_definition}' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
@@ -33,11 +36,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy with a task definition json file" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/task-definition.json
 
   stub aws \
@@ -57,12 +55,10 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy with multiple images" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/multiple-images.json
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE # we are providing an array
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_0=hello-world:llamas
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_1=hello-world:alpacas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/multiple-images.json
 
   expected_multiple_container_definition='[\n  {\n    "essential": true,\n    "image": "hello-world:llamas",\n    "memory": 100,\n    "name": "sample",\n    "portMappings": [\n      {\n        "containerPort": 80,\n        "hostPort": 80\n      }\n    ]\n  },\n  {\n    "essential": true,\n    "image": "hello-world:alpacas",\n    "memory": 100,\n    "name": "sample",\n    "portMappings": [\n      {\n        "containerPort": 80,\n        "hostPort": 80\n      }\n    ]\n  }\n]'
 
@@ -83,15 +79,13 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Add env vars on multiple images" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/multiple-images.json
+  unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE # we are providing an array
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_0=hello-world:llamas
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_1=hello-world:alpacas
   export BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_0="FOO=bar"
   export BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_1="BAZ=bing"
 
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/multiple-images.json
 
   # first command stubbed saves the container definition to ${TMP_DIR}/container_definition for later review and manipulation
   # we should be stubbing a lot more calls, but we don't care about those so let the stubbing fail
@@ -121,12 +115,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy when service does not exist" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
-
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo -n ''" \
@@ -145,12 +133,7 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy with a new service with definition" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION=examples/service-definition.json
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
 
   stub aws \
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
@@ -170,11 +153,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy with task role" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN=arn:aws:iam::012345678910:role/world
 
   stub aws \
@@ -194,11 +172,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy with target group" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP=arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME=nginx
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT=80
@@ -223,11 +196,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy with ELBv1" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME=nginx-elb
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME=nginx
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT=80
@@ -250,11 +218,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy with execution role" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE=arn:aws:iam::012345678910:role/world
 
   stub aws \
@@ -274,11 +237,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Create a service with deployment configuration" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
   export BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION="0/100"
 
   stub aws \
@@ -299,10 +257,6 @@ expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propag
 }
 
 @test "Run a deploy when the container definition is incorrect" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=tests/incorrect-container-definition.json
 
   run "$PWD/hooks/command"
