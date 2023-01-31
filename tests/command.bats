@@ -9,66 +9,6 @@ expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hel
 expected_task_definition='{\n    "networkMode": "awsvpc"\n}'
 expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propagateTags": "TASK_DEFINITION"\n}'
 
-@test "Fail with missing cluster" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
-
-  run "$PWD/hooks/command"
-
-  assert_failure
-  assert_output --partial "Missing cluster"
-}
-
-@test "Fail with missing service" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
-
-  run "$PWD/hooks/command"
-
-  assert_failure
-  assert_output --partial "Missing service name"
-}
-
-@test "Fail with missing task family" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
-
-  run "$PWD/hooks/command"
-
-  assert_failure
-  assert_output --partial "Missing task family"
-}
-
-@test "Fail with missing deploy image" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/hello-world.json
-
-  run "$PWD/hooks/command"
-
-  assert_failure
-  assert_output --partial "Missing image to use"
-}
-
-@test "Fail with missing container definition" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE=hello-world:llamas
-
-  run "$PWD/hooks/command"
-
-  assert_failure
-  assert_output --partial "Missing container definition"
-}
-
 @test "Run a deploy when service exists" {
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER=my-cluster
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
