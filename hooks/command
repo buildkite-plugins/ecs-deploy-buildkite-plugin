@@ -7,10 +7,10 @@ DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 . "$DIR/../lib/plugin.bash"
 
 # mandatory configurations
-cluster=${BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER?Missing cluster}
-container_definitions=${BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS?Missing container definitions}
-task_family=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY?Missing task family}
-service_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE?Missing service name}
+cluster=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_CLUSTER?Missing cluster}
+container_definitions=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_CONTAINER_DEFINITIONS?Missing container definitions}
+task_family=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_TASK_FAMILY?Missing task family}
+service_name=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_SERVICE?Missing service name}
 
 if ! plugin_read_list_into_result "IMAGE"; then
   echo ":boom: Missing image to use"
@@ -19,11 +19,11 @@ fi
 images=("${result[@]}")
 
 # optional configurations
-desired_count=${BUILDKITE_PLUGIN_ECS_DEPLOY_DESIRED_COUNT:-"1"}
-target_group=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP:-""}
-load_balancer_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME:-""}
-target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
-target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
+desired_count=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_DESIRED_COUNT:-"1"}
+target_group=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_TARGET_GROUP:-""}
+load_balancer_name=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_LOAD_BALANCER_NAME:-""}
+target_container=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
+target_port=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
 
 # necessary for compatibility with bash 4.3
 if plugin_read_list_into_result "ENV"; then
@@ -33,7 +33,7 @@ else
 fi
 
 aws_default_args=()
-region=${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-""}
+region=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_REGION:-""}
 if [[ -n "${region}" ]]; then
   aws_default_args+=(--region "${region}")
 fi
@@ -60,7 +60,7 @@ function create_service() {
     generate_target_group_arguments "$5" "$6" "$7"
     target_group_arguments=("${result[@]}")  # copying the array
 
-    service_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION:-""}
+    service_definition=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_SERVICE_DEFINITION:-""}
     if [[ -n "${service_definition}" ]]; then
       service_definition_json=$(cat "${service_definition}")
     fi
@@ -77,7 +77,7 @@ function create_service() {
     if [[ $service_defined -eq 0 ]]; then
       echo "--- :ecs: Creating a Service $service_name in cluster $cluster_name"
 
-      deployment_config=${BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION:-"100/200"}
+      deployment_config=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION:-"100/200"}
       IFS="/" read -r -a min_max_percent <<< "${deployment_config}"
       min_deploy_perc=${min_max_percent[0]}
       max_deploy_perc=${min_max_percent[1]}
@@ -147,17 +147,17 @@ register_command=(aws ecs register-task-definition
     --container-definitions "${container_definitions_json}"
 )
 
-task_role_arn=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN:-""}
+task_role_arn=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_TASK_ROLE_ARN:-""}
 if [[ -n "${task_role_arn}" ]]; then
     register_command+=(--task-role-arn "${task_role_arn}")
 fi
 
-execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
+execution_role=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_EXECUTION_ROLE:-""}
 if [[ -n "${execution_role}" ]]; then
     register_command+=(--execution-role-arn "${execution_role}")
 fi
 
-task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION:-""}
+task_definition=${BUILDKITE_PLUGIN_CTE_ECS_DEPLOY_TASK_DEFINITION:-""}
 if [[ -n "${task_definition}" ]]; then
     task_definition_json=$(cat "${task_definition}")
     register_command+=(--cli-input-json "${task_definition_json}")
