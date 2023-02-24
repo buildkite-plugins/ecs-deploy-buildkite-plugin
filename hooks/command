@@ -70,7 +70,7 @@ function create_service() {
         "${aws_default_args[@]}" \
         --cluster "$cluster_name" \
         --service "$service_name" \
-        --query 'services[?status=="ACTIVE"].status' \
+        --query "services[?status=='ACTIVE'].status" \
         --output text \
         | wc -l
     )
@@ -180,7 +180,7 @@ echo "Registered ${task_family}:${task_revision}"
 # Create service if it doesn't already exist
 create_service "$cluster" "${task_family}:${task_revision}" "$service_name" "$desired_count" "$target_group" "$target_container" "$target_port"
 
-lb_config=$(aws ecs describe-services --cluster "$cluster" --services "$service_name" --query 'services[?status=="ACTIVE"]' | jq -r '.[0].loadBalancers[0]')
+lb_config=$(aws ecs describe-services --cluster "$cluster" --services "$service_name" --query "services[?status=='ACTIVE']" | jq -r '.[0].loadBalancers[0]')
 error="+++ ^^^
 +++ Cannot update a service to add/remove a load balancer. First delete the service and then run again, or rename the service to force a new one to be created"
 
@@ -226,7 +226,7 @@ service_events=$(aws ecs describe-services \
   "${aws_default_args[@]}" \
   --cluster "${cluster}" \
   --service "${service_name}" \
-  --query 'services[].events' --output text)
+  --query "services[].events" --output text)
 
 if [[ $deploy_exitcode -eq 0 ]]; then
   echo "--- :ecs: Service is up 🚀"
