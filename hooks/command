@@ -57,8 +57,11 @@ function create_service() {
     local service_definition_json="{}"
     local target_group_arguments
 
-    generate_target_group_arguments "$5" "$6" "$7"
-    target_group_arguments=("${result[@]}")  # copying the array
+    if generate_target_group_arguments "$5" "$6" "$7"
+      target_group_arguments=("${result[@]}")  # copying the array
+    else
+      target_group_arguments=()
+    fi
 
     service_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION:-""}
     if [[ -n "${service_definition}" ]]; then
@@ -67,7 +70,7 @@ function create_service() {
 
     service_defined=$(
       aws ecs describe-services \
-        "${aws_default_args[@]}" \
+        ${aws_default_args[@]+"${aws_default_args[@]}"} \
         --cluster "$cluster_name" \
         --service "$service_name" \
         --query "services[?status=='ACTIVE'].status" \
@@ -83,13 +86,13 @@ function create_service() {
       max_deploy_perc=${min_max_percent[1]}
 
       aws ecs create-service \
-        "${aws_default_args[@]}" \
+        ${aws_default_args[@]+"${aws_default_args[@]}"} \
         --cluster "$cluster_name" \
         --service-name "$service_name" \
         --task-definition "$task_definition" \
         --desired-count "$desired_count" \
         --deployment-configuration "maximumPercent=${max_deploy_perc},minimumHealthyPercent=${min_deploy_perc}" \
-        "${target_group_arguments[@]}" \
+        ${target_group_arguments[@]+"${target_group_arguments[@]}"} \
         --cli-input-json "$service_definition_json"
     fi
 }
@@ -142,7 +145,7 @@ done
 
 echo "--- :ecs: Registering new task definition for ${task_family}"
 register_command=(aws ecs register-task-definition
-    "${aws_default_args[@]}"
+    ${aws_default_args[@]+"${aws_default_args[@]}"}
     --family "${task_family}"
     --container-definitions "${container_definitions_json}"
 )
@@ -208,7 +211,7 @@ fi
 
 echo "--- :ecs: Updating service for ${service_name}"
 aws ecs update-service \
-  "${aws_default_args[@]}" \
+  ${aws_default_args[@]+"${aws_default_args[@]}"} \
   --cluster "${cluster}" \
   --service "${service_name}" \
   --task-definition "${task_family}:${task_revision}"
@@ -217,13 +220,13 @@ aws ecs update-service \
 echo "--- :ecs: Waiting for services to stabilize"
 deploy_exitcode=0
 aws ecs wait services-stable \
-  "${aws_default_args[@]}" \
+  ${aws_default_args[@]+"${aws_default_args[@]}"} \
   --cluster "${cluster}" \
   --services "${service_name}" || deploy_exitcode=$?
 
 
 service_events=$(aws ecs describe-services \
-  "${aws_default_args[@]}" \
+  ${aws_default_args[@]+"${aws_default_args[@]}"} \
   --cluster "${cluster}" \
   --service "${service_name}" \
   --query 'services[].events' --output text)
