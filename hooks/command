@@ -16,7 +16,7 @@ if ! plugin_read_list_into_result "IMAGE"; then
   echo ":boom: Missing image to use"
   exit 1
 fi
-images=(${result[@]+"${result[@]}"})
+images=("${result[@]}")
 
 # optional configurations
 desired_count=${BUILDKITE_PLUGIN_ECS_DEPLOY_DESIRED_COUNT:-"1"}
