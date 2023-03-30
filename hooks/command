@@ -57,7 +57,7 @@ function create_service() {
     local service_definition_json="{}"
     local target_group_arguments
 
-    if generate_target_group_arguments "$5" "$6" "$7"
+    if generate_target_group_arguments "$5" "$6" "$7"; then
       target_group_arguments=("${result[@]}")  # copying the array
     else
       target_group_arguments=()
