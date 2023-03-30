@@ -27,7 +27,7 @@ target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
 
 # necessary for compatibility with bash 4.3
 if plugin_read_list_into_result "ENV"; then
-  env_vars=(${result[@]+"${result[@]}"})
+  env_vars=("${result[@]}")
 else
   env_vars=()
 fi
