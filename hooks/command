@@ -57,8 +57,11 @@ function create_service() {
     local service_definition_json="{}"
     local target_group_arguments
 
-    generate_target_group_arguments "$5" "$6" "$7"
-    target_group_arguments=(${result[@]+"${result[@]}"})  # copying the array
+    if generate_target_group_arguments "$5" "$6" "$7"
+      target_group_arguments=("${result[@]}")  # copying the array
+    else
+      target_group_arguments=()
+    fi
 
     service_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION:-""}
     if [[ -n "${service_definition}" ]]; then
