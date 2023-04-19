@@ -273,8 +273,6 @@ setup() {
 }
 
 @test "Fail with missing container definition and aws failure" {
-  unset BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS
-
   stub aws 'exit 1' # whatever we receive, fail
 
   run "$PWD/hooks/command"
