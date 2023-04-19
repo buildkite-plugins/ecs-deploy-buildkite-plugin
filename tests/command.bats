@@ -283,8 +283,8 @@ setup() {
   stub aws \
     "ecs describe-task-definition --task-definition \* --query \* : cat examples/hello-world.json" \
     "ecs register-task-definition --family hello-world --container-definitions $'${expected_container_definition}' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[?status==\"ACTIVE\"].status' --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[?status==\"ACTIVE\"]' : echo 'null'" \
+    "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo '1'" \
+    "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
