@@ -263,7 +263,7 @@ setup() {
 
   run "$PWD/hooks/command"
   assert_failure
-  assert_output --partial 'Invalid Container Definitions (should be in the format of [{"image": "..."}] )'
+  assert_output --partial 'Invalid container definition (should be in the format of [{"image": "..."}] )'
 
   unstub aws
 }

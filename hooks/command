@@ -45,7 +45,7 @@ else
 fi
 
 if [ "$(jq -r '. | type' "${container_definitions}")" != "array" ]; then
-  echo 'Invalid Container Definitions (should be in the format of [{"image": "..."}] )'
+  echo 'Invalid container definition (should be in the format of [{"image": "..."}] )'
   exit 1
 fi
 
