@@ -6,7 +6,6 @@ load "${BATS_PLUGIN_PATH}/load.bash"
 # export AWS_STUB_DEBUG=/dev/tty
 
 expected_container_definition='[\n  {\n    "essential": true,\n    "image": "hello-world:llamas",\n    "memory": 100,\n    "name": "sample",\n    "portMappings": [\n      {\n        "containerPort": 80,\n        "hostPort": 80\n      }\n    ]\n  }\n]'
-expected_task_definition='{\n    "networkMode": "awsvpc"\n}'
 expected_service_definition='{\n    "schedulingStrategy": "DAEMON",\n    "propagateTags": "TASK_DEFINITION"\n}'
 
 setup() {
@@ -39,20 +38,10 @@ setup() {
 @test "Run a deploy with a task definition json file" {
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/task-definition.json
 
-  stub aws \
-    "ecs register-task-definition --family hello-world --container-definitions $'$expected_container_definition' --cli-input-json $'$expected_task_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
-    "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
-    "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
-
   run "$PWD/hooks/command"
 
-  assert_success
-  assert_output --partial "Service is up 🚀"
-
-  unstub aws
+  assert_failure
+  assert_output --partial "The task-definition parameter has been deprecated"
 }
 
 @test "Run a deploy with multiple images" {
@@ -274,7 +263,7 @@ setup() {
 
   run "$PWD/hooks/command"
   assert_failure
-  assert_output --partial 'JSON definition should be in the format of [{"image": "..."}]'
+  assert_output --partial 'Invalid Container Definitions (should be in the format of [{"image": "..."}] )'
 
   unstub aws
 }
