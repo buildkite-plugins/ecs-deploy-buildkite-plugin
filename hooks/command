@@ -106,7 +106,7 @@ if [ -n "${task_cpu}" ]; then
   register_command+=(--cpu "${task_cpu}")
 fi
 
-task_ephemeral=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_EPHEMERAL_STORAGE:-$(jq -r '.cpu // ""' "${task_file}")}
+task_ephemeral=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_EPHEMERAL_STORAGE:-$(jq -r '.ephemeralStorage.sizeInGiB // ""' "${task_file}")}
 if [ -n "${task_ephemeral}" ]; then
   register_command+=(--ephemeral-storage "sizeInGiB=${task_ephemeral}")
 fi
