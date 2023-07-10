@@ -27,15 +27,10 @@
     }
   ],
   "family": "hello-world",
-  "executionRoleArn": "ExecutionRoleARN",
-  "networkMode": "awsvpc",
   "revision": 1,
-  "volumes": [],
   "status": "ACTIVE",
   "compatibilities": [
     "EC2",
     "FARGATE"
-  ],
-  "cpu": "10",
-  "memory": "100"
+  ]
 }
