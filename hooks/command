@@ -96,58 +96,58 @@ register_command=(aws ecs register-task-definition
   --container-definitions "${container_definitions_json}"
 )
 
-execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-$(jq '.executionRoleArn // ""' "${task_file}")}
+execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-$(jq -r '.executionRoleArn // ""' "${task_file}")}
 if [ -n "${execution_role}" ]; then
   register_command+=(--execution-role-arn "${execution_role}")
 fi
 
-task_cpu=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_CPU:-$(jq '.cpu // ""' "${task_file}")}
+task_cpu=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_CPU:-$(jq -r '.cpu // ""' "${task_file}")}
 if [ -n "${task_cpu}" ]; then
   register_command+=(--cpu "${task_cpu}")
 fi
 
-task_ephemeral=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_EPHEMERAL_STORAGE:-$(jq '.cpu // ""' "${task_file}")}
+task_ephemeral=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_EPHEMERAL_STORAGE:-$(jq -r '.cpu // ""' "${task_file}")}
 if [ -n "${task_ephemeral}" ]; then
   register_command+=(--ephemeral-storage "sizeInGiB=${task_ephemeral}")
 fi
 
-task_ipc=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_IPC_MODE:-$(jq '.ipcMode // ""' "${task_file}")}
+task_ipc=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_IPC_MODE:-$(jq -r '.ipcMode // ""' "${task_file}")}
 if [ -n "${task_ipc}" ]; then
   register_command+=(--ipc-mode "${task_ipc}")
 fi
 
-task_memory=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_MEMORY:-$(jq '.memory // ""' "${task_file}")}
+task_memory=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_MEMORY:-$(jq -r '.memory // ""' "${task_file}")}
 if [ -n "${task_memory}" ]; then
   register_command+=(--memory "${task_memory}")
 fi
 
-task_network=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_NETWORK_MODE:-$(jq '.networkMode // ""' "${task_file}")}
+task_network=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_NETWORK_MODE:-$(jq -r '.networkMode // ""' "${task_file}")}
 if [ -n "${task_network}" ]; then
   register_command+=(--network-mode "${task_network}")
 fi
 
-task_pid=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_PID_MODE:-$(jq '.pidMode // ""' "${task_file}")}
+task_pid=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_PID_MODE:-$(jq -r '.pidMode // ""' "${task_file}")}
 if [ -n "${task_pid}" ]; then
   register_command+=(--pid-mode "${task_pid}")
 fi
 
-task_role_arn=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN:-$(jq '.taskRoleArn // ""' "${task_file}")}
+task_role_arn=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN:-$(jq -r '.taskRoleArn // ""' "${task_file}")}
 if [ -n "${task_role_arn}" ]; then
   register_command+=(--task-role-arn "${task_role_arn}")
 fi
 
 # Following options are to keep values (they are complex for plugin-based configurations)
-task_volumes=$(jq '.volumes // ""' "${task_file}")
+task_volumes=$(jq -r '.volumes // ""' "${task_file}")
 if [ -n "${task_volumes}" ]; then
   register_command+=(--volumes "${task_volumes}")
 fi
 
-task_placement=$(jq '.placementConstraints // ""' "${task_file}")
+task_placement=$(jq -r '.placementConstraints // ""' "${task_file}")
 if [ -n "${task_placement}" ]; then
   register_command+=(--placement-constraints "${task_placement}")
 fi
 
-task_compat_reqs=$(jq '.requiresCompatibilities // ""' "${task_file}")
+task_compat_reqs=$(jq -r '.requiresCompatibilities // ""' "${task_file}")
 if [ -n "${task_compat_reqs}" ]; then
   register_command+=(--requires-compatibilities "${task_compat_reqs}")
 fi
