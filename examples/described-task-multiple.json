@@ -1,0 +1,41 @@
+{
+  "taskDefinitionArn": "TaskARN",
+  "containerDefinitions": [
+    {
+      "essential": true,
+      "image": "amazon/amazon-ecs-sample",
+      "memory": 100,
+      "name": "sample",
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80
+        }
+      ]
+    },
+    {
+      "essential": true,
+      "image": "amazon/amazon-ecs-sample",
+      "memory": 100,
+      "name": "sample",
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80
+        }
+      ]
+    }
+  ],
+  "family": "hello-world",
+  "executionRoleArn": "ExecutionRoleARN",
+  "networkMode": "awsvpc",
+  "revision": 1,
+  "volumes": [],
+  "status": "ACTIVE",
+  "compatibilities": [
+    "EC2",
+    "FARGATE"
+  ],
+  "cpu": "10",
+  "memory": "100"
+}

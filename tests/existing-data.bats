@@ -15,28 +15,8 @@ setup() {
 @test "Run a deploy when service exists" {
 
   stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition.containerDefinitions : cat examples/hello-world.json" \
+    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
-    "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
-    "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
-
-  run "$PWD/hooks/command"
-
-  assert_success
-  assert_output --partial "Service is up 🚀"
-
-  unstub aws
-}
-
-@test "Run a deploy with a task definition json file" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/task-definition.json
-
-  stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition.containerDefinitions : cat examples/hello-world.json" \
-    "ecs register-task-definition --family hello-world --container-definitions \* --cli-input-json \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo '1'" \
     "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
@@ -57,7 +37,7 @@ setup() {
   export BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE_1=hello-world:alpacas
 
   stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition.containerDefinitions : cat examples/multiple-images.json" \
+    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task-multiple.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo '1'" \
     "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
@@ -83,7 +63,7 @@ setup() {
   # first command stubbed saves the container definition to ${TMP_DIR}/container_definition for later review and manipulation
   # we should be stubbing a lot more calls, but we don't care about those so let the stubbing fail
   stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition.containerDefinitions : cat examples/multiple-images.json" \
+    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task-multiple.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* : echo \"\$6\" > ${_TMP_DIR}/container_definition ; echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo '1'" \
     "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
@@ -110,7 +90,7 @@ setup() {
 
 @test "Run a deploy when service does not exist" {
   stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition.containerDefinitions : cat examples/hello-world.json" \
+    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo -n ''" \
     "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --cli-input-json '{}' : echo -n ''" \
@@ -131,7 +111,7 @@ setup() {
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION=examples/service-definition.json
 
   stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition.containerDefinitions : cat examples/hello-world.json" \
+    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo -n ''" \
     "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --cli-input-json \* : echo -n ''" \
@@ -152,7 +132,7 @@ setup() {
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN=arn:aws:iam::012345678910:role/world
 
   stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition.containerDefinitions : cat examples/hello-world.json" \
+    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* --task-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo '1'" \
     "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
@@ -176,7 +156,7 @@ setup() {
   alb_config='[{"loadBalancers":[{"containerName":"nginx","containerPort":80,"targetGroupArn":"arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc"}]}]'
 
   stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition.containerDefinitions : cat examples/hello-world.json" \
+    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo -n ''" \
     "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --load-balancers targetGroupArn=arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc,containerName=nginx,containerPort=80 --cli-input-json '{}' : echo -n ''" \
@@ -199,7 +179,7 @@ setup() {
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT=80
 
   stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition.containerDefinitions : cat examples/hello-world.json" \
+    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo -n ''" \
     "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --load-balancers loadBalancerName=nginx-elb,containerName=nginx,containerPort=80 --cli-input-json '{}' : echo -n ''" \
@@ -220,7 +200,7 @@ setup() {
   export BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE=arn:aws:iam::012345678910:role/world
 
   stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition.containerDefinitions : cat examples/hello-world.json" \
+    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* --execution-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo '1'" \
     "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
@@ -240,7 +220,7 @@ setup() {
   export BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION="0/100"
 
   stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition.containerDefinitions : cat examples/hello-world.json" \
+    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo -n ''" \
     "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=100,minimumHealthyPercent=0 --cli-input-json '{}' : echo -n ''" \
@@ -260,12 +240,12 @@ setup() {
 @test "Run a deploy when the container definition is incorrect" {
   
   stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition.containerDefinitions : cat tests/incorrect-container-definition.json"
+    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : echo '{}'"
 
   run "$PWD/hooks/command"
   
   assert_failure
-  assert_output --partial 'JSON definition should be in the format of [{"image": "..."}]'
+  assert_output --partial 'Invalid container definition (should be in the format of [{"image": "..."}] )'
   
   unstub aws
 }
@@ -276,7 +256,7 @@ setup() {
   run "$PWD/hooks/command"
 
   assert_failure
-  assert_output --partial "Could not get container definitions"
+  assert_output --partial "Could not obtain existing task definition"
 
   unstub aws
 }
