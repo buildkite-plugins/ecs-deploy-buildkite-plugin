@@ -35,7 +35,7 @@ Example: `"my-cluster"`
 
 #### `container-definitions`
 
-_Experimental:_ Since version 2.1.0 you can skip this parameter and the container definitions will be obtained off the existing (latest) task definition. If this does not work for you, please open an issue in this repository.
+_Experimental:_ Since version 3.0.0 you can skip this parameter and the container definitions will be obtained off the existing (latest) task definition. If this does not work for you, please open an issue in this repository.
 
 The file path to the ECS container definition JSON file. This JSON file must be an array of objects, each corresponding to one of the images you defined in the `image` parameter.
 
@@ -143,17 +143,6 @@ The Container Name to forward ALB requests to.
 #### `target-container-port` (optional)
 
 The Container Port to forward requests to.
-
-##### `task-definition`
-
-The file path to the ECS task definition JSON file. Parameters specified in this file will be overridden by other arguments if set. Setting the `containers` property in this file will have no effect, define those parameters in `container-definitions`
-
-Example: `"ecs/task.json"`
-```json
-{
-  "networkMode": "awsvpc"
-}
-```
 
 #### `task-role-arn` (optional)
 

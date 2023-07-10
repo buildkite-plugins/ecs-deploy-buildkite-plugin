@@ -12,8 +12,6 @@ configuration:
       type: string
     service:
       type: string
-    task-definition:
-      type: string
     task-family:
       type: string
     service-definition:

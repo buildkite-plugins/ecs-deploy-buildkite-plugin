@@ -23,32 +23,30 @@ target_group=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP:-""}
 load_balancer_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME:-""}
 target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
-task_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION:-""}
 
-if [ -z "${task_definition}" ]; then
-  task_file=$(mktemp)
-  if ! aws ecs describe-task-definition --task-definition "${task_family}" --query 'taskDefinition' >"${task_file}"; then
-    echo ":boom: Could not get task definitions (you need to define one in your repository and use the task-definition option)"
-    exit 1
-  fi
-
-  task_definition_json=$(cat "${task_file}")
-  rm "${task_file}"
-else
-  task_definition_json=$(cat "${task_definition}")
+if [ -n "${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION:-""}" ]; then
+  echo ":boom: The task-definition parameter has been deprecated"
+  exit 1
 fi
 
-if [ -z "${BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS:-}" ]; then
-  container_definitions_json=$(jq '.containerDefinitions' <"${task_definition_json}")
-else
-  container_definitions_json=$(cat "${BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS}")
+task_file=$(mktemp)
+trap 'rm "${task_file}"' EXIT
+
+if ! aws ecs describe-task-definition --task-definition "${task_family}" --query 'taskDefinition' >"${task_file}"; then
+  echo "Could not obtain existing task definition"
 fi
 
-if [[ $(jq '. | keys | first' <<<"$container_definitions_json") != "0" ]]; then
-    echo "^^^"
-    echo "Invalid Container Definitions"
-    echo 'JSON definition should be in the format of [{"image": "..."}]'
-    exit 1
+if [ -n "${BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS:-}" ]; then
+  container_definitions="${BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS}"
+else
+  container_definitions=$(mktemp)
+  trap 'rm "${container_definitions}"' EXIT
+  jq '.containerDefinitions' "${task_file}" >"${container_definitions}"
+fi
+
+if [ "$(jq -r '. | type' "${container_definitions}")" != "array" ]; then
+  echo 'Invalid Container Definitions (should be in the format of [{"image": "..."}] )'
+  exit 1
 fi
 
 # necessary for compatibility with bash 4.3
@@ -67,7 +65,8 @@ fi
 target_group=$(eval "echo $target_group")
 load_balancer_name=$(eval "echo $load_balancer_name")
 
-## This is the template definition of your containers
+# jq has no in-place edition https://github.com/jqlang/jq/issues/105
+container_definitions_json=$(cat "${container_definitions}")
 image_idx=0
 for image in "${images[@]}"; do
   container_definitions_json=$(
@@ -105,10 +104,6 @@ fi
 execution_role=${BUILDKITE_PLUGIN_ECS_DEPLOY_EXECUTION_ROLE:-""}
 if [[ -n "${execution_role}" ]]; then
     register_command+=(--execution-role-arn "${execution_role}")
-fi
-
-if [[ -n "${task_definition}" ]]; then
-    register_command+=(--cli-input-json "${task_definition_json}")
 fi
 
 echo "--- :ecs: register command:"
