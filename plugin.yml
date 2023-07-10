@@ -32,7 +32,19 @@ configuration:
       type: integer
     target-group:
       type: string
+    task-cpu:
+      type: integer
+    task-ephemeral-storage:
+      type: integer
+    task-ipc-mode:
+      type: string
     task-family:
+      type: string
+    task-memory:
+      type: integer
+    task-network-mode:
+      type: string
+    task-pid-mode:
       type: string
     task-role-arn:
       type: string

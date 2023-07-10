@@ -130,12 +130,6 @@ Example: `"ecs/service.json"`
 }
 ```
 
-#### `target-group` (optional)
-
-The Target Group ARN to map the service to.
-
-Example: `"arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc"`
-
 #### `target-container-name` (optional)
 
 The Container Name to forward ALB requests to.
@@ -143,6 +137,36 @@ The Container Name to forward ALB requests to.
 #### `target-container-port` (optional)
 
 The Container Port to forward requests to.
+
+#### `target-group` (optional)
+
+The Target Group ARN to map the service to.
+
+Example: `"arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc"`
+
+#### `task-cpu` (optional, integer)
+
+CPU Units to assign to the task (1024 constitutes a whole CPU). Example: `256` (1/4 of a CPU).
+
+#### `task-ephemeral-storage` (optional, integer)
+
+Amount of GBs to assign in ephemeral storage to the task. Example: `25`.
+
+#### `task-ipc-mode` (optional)
+
+IPC resource namespace to use in the task. If specified, should be one of `host`, `task` or `none`.
+
+#### `task-memory` (optional, integer)
+
+Amount of memory (in Mbs) to allocate for the task. Example: `1024` (1Gb).
+
+#### `task-network-mode` (optional)
+
+Docker networking mode for the containers running in the task. If specified, should be one of `bridge`, `host`, `awsvpc` or `none`.
+
+#### `task-pid-mode` (optional)
+
+Process namespace to use for containers in the task. If specified, should be one of `host` or `task`.
 
 #### `task-role-arn` (optional)
 
