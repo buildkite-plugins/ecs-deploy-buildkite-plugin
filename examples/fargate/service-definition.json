@@ -1,0 +1,13 @@
+{
+    "networkConfiguration": {
+      "awsvpcConfiguration": {
+        "subnets": [
+          "subnet-abc",
+          "subnet-def",
+          "subnet-ghi"
+        ]
+      }
+    },
+    "launchType": "FARGATE"
+  }
+  
