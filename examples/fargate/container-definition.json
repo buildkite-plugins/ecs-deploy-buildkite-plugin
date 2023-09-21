@@ -1,0 +1,13 @@
+[
+    {
+        "essential": true,
+        "image": "amazon/amazon-ecs-sample",
+        "name": "sample",
+        "portMappings": [
+            {
+                "containerPort": 80,
+                "hostPort": 80
+            }
+        ]
+    }
+]
