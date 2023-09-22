@@ -152,7 +152,13 @@ The region we deploy the ECS Service to.
 
 ### `env` (optional)
 
-An array of environment variables to add to *every* image's task definition
+An array of environment variables to add to *every* image's task definition.
+
+Example:
+```yaml
+env:
+  - ENVIRONMENT=production
+```
 
 ## AWS Roles
 
