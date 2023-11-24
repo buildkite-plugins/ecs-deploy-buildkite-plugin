@@ -10,37 +10,46 @@ configuration:
       type: string
     container-definitions:
       type: string
-    service:
+    deployment-config:
       type: string
-    task-definition:
+    desired-count:
       type: string
-    task-family:
-      type: string
-    service-definition:
+    env:
+      type: array
+    execution-role:
       type: string
     image:
       type: [ string, array ]
-    desired-count:
-      type: string
-    task-role-arn:
-      type: string
-    target-group:
-      type: string
     load-balanccer-name:
+      type: string
+    service:
+      type: string
+    service-definition:
       type: string
     target-container-name:
       type: string
     target-container-port:
       type: integer
-    execution-role:
+    target-group:
       type: string
-    deployment-config:
+    task-cpu:
+      type: integer
+    task-ephemeral-storage:
+      type: integer
+    task-ipc-mode:
       type: string
-    env:
-      type: array
+    task-family:
+      type: string
+    task-memory:
+      type: integer
+    task-network-mode:
+      type: string
+    task-pid-mode:
+      type: string
+    task-role-arn:
+      type: string
   required:
     - cluster
     - service
-    - container-definitions
     - task-family
     - image
