@@ -20,7 +20,7 @@ configuration:
       type: string
     image:
       type: [ string, array ]
-    load-balanccer-name:
+    load-balancer-name:
       type: string
     service:
       type: string
