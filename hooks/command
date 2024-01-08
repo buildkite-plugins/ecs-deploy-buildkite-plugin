@@ -169,7 +169,7 @@ echo "Registered ${task_family}:${task_revision}"
 # Create service if it doesn't already exist
 aws_describe_service_args=(
   --cluster "$cluster"
-  --service "$service_name"
+  --services "$service_name"
 )
 
 aws_create_service_args=(
