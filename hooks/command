@@ -225,7 +225,14 @@ if [[ $service_defined -eq 0 ]]; then
     --cli-input-json "$service_definition_json"
 fi
 
-lb_config=$(aws ecs describe-services --cluster "$cluster" --services "$service_name" --query "services[?status=='ACTIVE']" | jq -r '.[0].loadBalancers[0]')
+lb_config=$(
+  aws ecs describe-services \
+  "${aws_default_args[@]+"${aws_default_args[@]}"}" \
+  "${aws_describe_service_args[@]}" \
+  --query "services[?status=='ACTIVE']" \
+  | jq -r '.[0].loadBalancers[0]'
+)
+
 error="+++ ^^^
 +++ Cannot update a service to add/remove a load balancer. First delete the service and then run again, or rename the service to force a new one to be created"
 
