@@ -276,8 +276,7 @@ aws ecs wait services-stable \
 
 service_events=$(aws ecs describe-services \
   ${aws_default_args[@]+"${aws_default_args[@]}"} \
-  --cluster "${cluster}" \
-  --service "${service_name}" \
+  "${aws_describe_service_args[@]}" \
   --query 'services[].events' --output text)
 
 if [[ $deploy_exitcode -eq 0 ]]; then
