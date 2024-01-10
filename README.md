@@ -114,6 +114,12 @@ Example: `"arn:aws:iam::012345678910:role/execution-role"`
 
 Requires the `iam:PassRole` permission for the execution role.
 
+#### `load-balancer-name` (optional)
+
+The name of the Elastic Load Balancer (Application or Network) used with the ECS Service.
+
+Example: `application-load-balancer`
+
 #### `region` (optional)
 
 The region we deploy the ECS Service to.
