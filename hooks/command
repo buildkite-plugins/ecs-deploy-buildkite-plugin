@@ -42,7 +42,7 @@ existing_task_definition=$(
   aws ecs describe-task-definition \
     "${aws_default_args[@]+"${aws_default_args[@]}"}" \
     --task-definition "${task_family}" \
-    --query 'taskDefinition' \
+    --query 'taskDefinition'
 )
 
 if ! existing_task_definition >"${task_file}"; then
