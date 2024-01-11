@@ -24,6 +24,12 @@ load_balancer_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME:-""}
 target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
 target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
 
+# default args for all aws cli calls
+aws_default_args=()
+if [ -n "${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-}" ]; then
+  aws_default_args+=(--region "${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION}")
+fi
+
 if [ -n "${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION:-""}" ]; then
   echo ":boom: The task-definition parameter has been deprecated"
   exit 1
@@ -32,7 +38,14 @@ fi
 task_file=$(mktemp)
 trap 'rm "${task_file}"' EXIT
 
-if ! aws ecs describe-task-definition --task-definition "${task_family}" --query 'taskDefinition' >"${task_file}"; then
+existing_task_definition=$(
+  aws ecs describe-task-definition \
+    "${aws_default_args[@]+"${aws_default_args[@]}"}" \
+    --task-definition "${task_family}" \
+    --query 'taskDefinition' \
+)
+
+if ! existing_task_definition >"${task_file}"; then
   echo "Could not obtain existing task definition"
 fi
 
@@ -54,11 +67,6 @@ if plugin_read_list_into_result "ENV"; then
   env_vars=("${result[@]}")
 else
   env_vars=()
-fi
-
-aws_default_args=()
-if [ -n "${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-}" ]; then
-  aws_default_args+=(--region "${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION}")
 fi
 
 # Resolve any runtime environment variables it has
