@@ -10,27 +10,13 @@ configuration:
       type: string
     container-definitions:
       type: string
-    deployment-config:
-      type: string
-    desired-count:
-      type: string
     env:
       type: array
     execution-role:
       type: string
     image:
       type: [ string, array ]
-    load-balancer-name:
-      type: string
     service:
-      type: string
-    service-definition:
-      type: string
-    target-container-name:
-      type: string
-    target-container-port:
-      type: integer
-    target-group:
       type: string
     task-cpu:
       type: integer
