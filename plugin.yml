@@ -16,6 +16,8 @@ configuration:
       type: string
     image:
       type: [ string, array ]
+    region:
+      type: string
     service:
       type: string
     task-cpu:
@@ -24,14 +26,17 @@ configuration:
       type: integer
     task-ipc-mode:
       type: string
+      enum: [ "host", "none", "task"]
     task-family:
       type: string
     task-memory:
       type: integer
     task-network-mode:
       type: string
+      enum: [ "awsvpc", "bridge", "host", "none" ]
     task-pid-mode:
       type: string
+      enum: [ "host", "task" ]
     task-role-arn:
       type: string
   required:
