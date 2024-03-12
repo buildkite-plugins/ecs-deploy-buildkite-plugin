@@ -69,10 +69,6 @@ if [ -n "${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-}" ]; then
   aws_default_args+=(--region "${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION}")
 fi
 
-# Resolve any runtime environment variables it has
-target_group=$(eval "echo $target_group")
-load_balancer_name=$(eval "echo $load_balancer_name")
-
 # jq has no in-place edition https://github.com/jqlang/jq/issues/105
 container_definitions_json=$(cat "${container_definitions}")
 image_idx=0
