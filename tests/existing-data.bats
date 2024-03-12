@@ -17,8 +17,6 @@ setup() {
   stub aws \
     "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
@@ -39,8 +37,6 @@ setup() {
   stub aws \
     "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task-multiple.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
@@ -65,8 +61,6 @@ setup() {
   stub aws \
     "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task-multiple.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* : echo \"\$6\" > ${_TMP_DIR}/container_definition ; echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
@@ -88,102 +82,12 @@ setup() {
   unstub aws
 }
 
-@test "Run a deploy when service does not exist" {
-  stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
-    "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --cli-input-json '{}' : echo -n ''" \
-    "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
-    "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
-    "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
-
-  run "$PWD/hooks/command"
-
-  assert_success
-  assert_output --partial "Service is up 🚀"
-
-  unstub aws
-}
-
-@test "Run a deploy with a new service with definition" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION=examples/service-definition.json
-
-  stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
-    "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --cli-input-json \* : echo -n ''" \
-    "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
-    "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
-    "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
-
-  run "$PWD/hooks/command"
-
-  assert_success
-  assert_output --partial "Service is up 🚀"
-
-  unstub aws
-}
-
 @test "Run a deploy with task role" {
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_ROLE_ARN=arn:aws:iam::012345678910:role/world
 
   stub aws \
     "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* --task-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
-    "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
-    "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
-
-  run "$PWD/hooks/command"
-
-  assert_success
-  assert_output --partial "Service is up 🚀"
-
-  unstub aws
-}
-
-@test "Run a deploy with target group" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP=arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME=nginx
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT=80
-
-  alb_config='[{"loadBalancers":[{"containerName":"nginx","containerPort":80,"targetGroupArn":"arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc"}]}]'
-
-  stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
-    "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --load-balancers targetGroupArn=arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc,containerName=nginx,containerPort=80 --cli-input-json '{}' : echo -n ''" \
-    "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo '$alb_config'" \
-    "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
-    "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
-
-  run "$PWD/hooks/command"
-
-  assert_success
-  assert_output --partial "Service is up 🚀"
-
-  unstub aws
-}
-
-@test "Run a deploy with ELBv1" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME=nginx-elb
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME=nginx
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT=80
-
-  stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
-    "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=200,minimumHealthyPercent=100 --load-balancers loadBalancerName=nginx-elb,containerName=nginx,containerPort=80 --cli-input-json '{}' : echo -n ''" \
-    "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo '[{\"loadBalancers\":[{\"loadBalancerName\": \"nginx-elb\",\"containerName\": \"nginx\",\"containerPort\": 80}]}]'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
@@ -202,29 +106,6 @@ setup() {
   stub aws \
     "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
     "ecs register-task-definition --family hello-world --container-definitions \* --execution-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo '1'" \
-    "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
-    "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
-    "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
-
-  run "$PWD/hooks/command"
-
-  assert_success
-  assert_output --partial "Service is up 🚀"
-
-  unstub aws
-}
-
-@test "Create a service with deployment configuration" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION="0/100"
-
-  stub aws \
-    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task.json" \
-    "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
-    "ecs describe-services --cluster my-cluster --service my-service --query \"services[?status=='ACTIVE'].status\" --output text : echo -n ''" \
-    "ecs create-service --cluster my-cluster --service-name my-service --task-definition hello-world:1 --desired-count 1 --deployment-configuration maximumPercent=100,minimumHealthyPercent=0 --cli-input-json '{}' : echo -n ''" \
-    "ecs describe-services --cluster my-cluster --services my-service --query \"services[?status=='ACTIVE']\" : echo 'null'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
     "ecs describe-services --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
