@@ -17,17 +17,25 @@ if ! plugin_read_list_into_result "IMAGE"; then
 fi
 images=("${result[@]}")
 
-# optional configurations
-desired_count=${BUILDKITE_PLUGIN_ECS_DEPLOY_DESIRED_COUNT:-"1"}
-target_group=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_GROUP:-""}
-load_balancer_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_LOAD_BALANCER_NAME:-""}
-target_container=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_NAME:-""}
-target_port=${BUILDKITE_PLUGIN_ECS_DEPLOY_TARGET_CONTAINER_PORT:-""}
-
 if [ -n "${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION:-""}" ]; then
   echo ":boom: The task-definition parameter has been deprecated"
   exit 1
 fi
+
+if [ -n "${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION:-""}" ]; then
+  echo ":boom: The service-definition parameter has been deprecated"
+  echo "Create the service outside of this plugin first (using CloudFormation or Terraform)"
+  exit 1
+fi
+
+for DEPRECATED_CONFIG in deployment-config deployment-configuration desired-count load-balancer-name target-container-name target-container-port target-group; do
+  VAR_NAME="BUILDKITE_PLUGIN_ECS_DEPLOY_$(echo "${DEPRECATED_CONFIG}" | tr 'a-z-' 'A-Z_')"
+
+  if [ -n "${!VAR_NAME:-""}" ]; then
+    echo ":warning: The ${DEPRECATED_CONFIG} parameter has been deprecated"
+    echo "Please configure the service outside of this plugin"
+  fi
+done
 
 task_file=$(mktemp)
 trap 'rm "${task_file}"' EXIT
@@ -165,91 +173,6 @@ fi
 
 task_revision=$(jq '.taskDefinition.revision' <<< "$json_output")
 echo "Registered ${task_family}:${task_revision}"
-
-# Create service if it doesn't already exist
-aws_describe_service_args=(
-  --cluster "$cluster"
-  --service "$service_name"
-)
-
-aws_create_service_args=(
-  --cluster "$cluster"
-  --service-name "$service_name"
-  --task-definition "${task_family}:${task_revision}"
-  --desired-count "$desired_count"
-)
-
-service_definition=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE_DEFINITION:-""}
-if [[ -n "${service_definition}" ]]; then
-  service_definition_json=$(cat "${service_definition}")
-else
-  service_definition_json="{}"
-fi
-
-service_defined=$(
-  aws ecs describe-services \
-    "${aws_default_args[@]+"${aws_default_args[@]}"}" \
-    "${aws_describe_service_args[@]}" \
-    --query "services[?status=='ACTIVE'].status" \
-    --output text \
-    | wc -l
-)
-
-deployment_config=${BUILDKITE_PLUGIN_ECS_DEPLOY_DEPLOYMENT_CONFIGURATION:-"100/200"}
-IFS="/" read -r -a min_max_percent <<< "${deployment_config}"
-min_deploy_perc=${min_max_percent[0]}
-max_deploy_perc=${min_max_percent[1]}
-
-aws_create_service_args+=(--deployment-configuration "maximumPercent=${max_deploy_perc},minimumHealthyPercent=${min_deploy_perc}")
-
-if [[ -n $target_container ]] && [[ -n $target_port ]]; then
-  if [[ -n $target_group ]]; then
-    load_balancer_ref="targetGroupArn=${target_group}"
-  elif [[ -n $load_balancer_name ]]; then
-    load_balancer_ref="loadBalancerName=${load_balancer_name}"
-  else
-    echo "+++ ^^^"
-    echo '+++ You must specify either target-group or load-balancer-name'
-    exit 1
-  fi
-
-  aws_create_service_args+=(--load-balancers "${load_balancer_ref},containerName=${target_container},containerPort=${target_port}")
-fi
-
-if [[ $service_defined -eq 0 ]]; then
-  echo "--- :ecs: Creating a Service $service_name in cluster $cluster"
-
-  aws ecs create-service \
-    "${aws_default_args[@]+"${aws_default_args[@]}"}" \
-    "${aws_create_service_args[@]}" \
-    --cli-input-json "$service_definition_json"
-fi
-
-lb_config=$(aws ecs describe-services --cluster "$cluster" --services "$service_name" --query "services[?status=='ACTIVE']" | jq -r '.[0].loadBalancers[0]')
-error="+++ ^^^
-+++ Cannot update a service to add/remove a load balancer. First delete the service and then run again, or rename the service to force a new one to be created"
-
-# No easy way to tell if the target group has changed, since describe-services only returns the load balancer name
-if [[ "$lb_config" == "null" ]]; then
-  if [[ -n "$target_group" ]] || [[ -n "$load_balancer_name" ]]; then
-    echo "$error. ELB configured but none set in container"
-    exit 1
-  fi
-fi
-
-if [[ "$lb_config" == "null" ]]; then
-  # noop
-  true
-elif [[ $(echo "$lb_config" | jq -r '.containerName') != "$target_container" ]] || [[ $(echo "$lb_config" | jq -r '.containerPort') -ne $target_port ]]; then
-  echo "$error. Container config differs"
-  exit 1
-elif [[ -n "$target_group" ]] && [[ $(echo "$lb_config" | jq -r '.targetGroupArn') != "$target_group" ]]; then
-  echo "$error. ALB config differs"
-  exit 1
-elif [[ -n "$load_balancer_name" ]] && [[ $(echo "$lb_config" | jq -r '.loadBalancerName') != "$load_balancer_name" ]]; then
-  echo "$error. ELB config differs"
-  exit 1
-fi
 
 echo "--- :ecs: Updating service for ${service_name}"
 aws ecs update-service \
