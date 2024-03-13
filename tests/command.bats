@@ -123,3 +123,22 @@ setup() {
 
   unstub aws
 }
+
+
+@test "Region parameter is applied to all AWS calls" {
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_REGION=custom-region
+
+  stub aws \
+    "ecs describe-task-definition --region custom-region --task-definition hello-world --query 'taskDefinition' : echo '{}'" \
+    "ecs register-task-definition --region custom-region --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
+    "ecs update-service --region custom-region --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
+    "ecs wait services-stable --region custom-region --cluster my-cluster --services my-service : echo ok" \
+    "ecs describe-services --region custom-region --cluster my-cluster --service my-service --query 'services[].events' --output text : echo ok"
+
+  run "$PWD/hooks/command"
+
+  assert_success
+  assert_output --partial "Service is up 🚀"
+
+  unstub aws
+}
