@@ -15,7 +15,7 @@ steps:
     concurrency_group: "my-service-deploy"
     concurrency: 1
     plugins:
-      - ecs-deploy#v2.1.0:
+      - ecs-deploy#v3.0.0:
           cluster: "my-ecs-cluster"
           service: "my-service"
           container-definitions: "examples/hello-world.json"
