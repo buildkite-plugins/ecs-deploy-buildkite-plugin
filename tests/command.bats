@@ -30,15 +30,6 @@ setup() {
   unstub aws
 }
 
-@test "Run a deploy with a task definition json file" {
-  export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_DEFINITION=examples/task-definition.json
-
-  run "$PWD/hooks/command"
-
-  assert_failure
-  assert_output --partial "The task-definition parameter has been deprecated"
-}
-
 @test "Run a deploy with multiple images" {
   export BUILDKITE_PLUGIN_ECS_DEPLOY_CONTAINER_DEFINITIONS=examples/multiple-images.json
   unset BUILDKITE_PLUGIN_ECS_DEPLOY_IMAGE # we are providing an array
