@@ -1,9 +1,0 @@
-{
-  "containerDefinitions": [
-    {
-      "name": "nginx",
-      "image": "nginx",
-      "essential": true
-    }
-  ]
-}
