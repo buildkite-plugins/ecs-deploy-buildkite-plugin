@@ -10,27 +10,15 @@ configuration:
       type: string
     container-definitions:
       type: string
-    deployment-config:
-      type: string
-    desired-count:
-      type: string
     env:
       type: array
     execution-role:
       type: string
     image:
       type: [ string, array ]
-    load-balancer-name:
+    region:
       type: string
     service:
-      type: string
-    service-definition:
-      type: string
-    target-container-name:
-      type: string
-    target-container-port:
-      type: integer
-    target-group:
       type: string
     task-cpu:
       type: integer
@@ -38,14 +26,17 @@ configuration:
       type: integer
     task-ipc-mode:
       type: string
+      enum: [ "host", "none", "task"]
     task-family:
       type: string
     task-memory:
       type: integer
     task-network-mode:
       type: string
+      enum: [ "awsvpc", "bridge", "host", "none" ]
     task-pid-mode:
       type: string
+      enum: [ "host", "task" ]
     task-role-arn:
       type: string
   required:

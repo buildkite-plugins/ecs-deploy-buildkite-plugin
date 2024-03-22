@@ -15,7 +15,7 @@ steps:
     concurrency_group: "my-service-deploy"
     concurrency: 1
     plugins:
-      - ecs-deploy#v2.1.0:
+      - ecs-deploy#v3.0.0:
           cluster: "my-ecs-cluster"
           service: "my-service"
           container-definitions: "examples/hello-world.json"
@@ -96,17 +96,11 @@ Example: `"my-task"`
 
 ### Optional
 
-#### `deployment-configuration` (optional)
+#### `env` (array)
 
-The minimum and maximum percentage of tasks that should be maintained during a deployment. Defaults to `100/200`
+An array of environment variables to add to *every* image's task definition in the `NAME=VALUE` format
 
-Example: `"0/100"`
-
-#### `env` (optional)
-
-An array of environment variables to add to *every* image's task definition
-
-#### `execution-role` (optional)
+#### `execution-role`
 
 The Execution Role ARN used by ECS to pull container images and secrets.
 
@@ -114,69 +108,38 @@ Example: `"arn:aws:iam::012345678910:role/execution-role"`
 
 Requires the `iam:PassRole` permission for the execution role.
 
-#### `load-balancer-name` (optional)
-
-The name of the Elastic Load Balancer (Application or Network) used with the ECS Service.
-
-Example: `application-load-balancer`
-
-#### `region` (optional)
+#### `region`
 
 The region we deploy the ECS Service to.
 
-#### `service-definition`
-
-The file path to the ECS service definition JSON file. Parameters specified in this file will be overridden by other arguments if set, e.g. `cluster`, `desired-count`, etc. Note that currently this json input will only be used when creating the service, NOT when updating it.
-
-Example: `"ecs/service.json"`
-```json
-{
-  "schedulingStrategy": "DAEMON",
-  "propagateTags": "TASK_DEFINITION"
-}
-```
-
-#### `target-container-name` (optional)
-
-The Container Name to forward ALB requests to.
-
-#### `target-container-port` (optional)
-
-The Container Port to forward requests to.
-
-#### `target-group` (optional)
-
-The Target Group ARN to map the service to.
-
-Example: `"arn:aws:elasticloadbalancing:us-east-1:012345678910:targetgroup/alb/e987e1234cd12abc"`
-
-#### `task-cpu` (optional, integer)
+#### `task-cpu` (integer)
 
 CPU Units to assign to the task (1024 constitutes a whole CPU). Example: `256` (1/4 of a CPU).
 
-#### `task-ephemeral-storage` (optional, integer)
+#### `task-ephemeral-storage` (integer)
 
 Amount of GBs to assign in ephemeral storage to the task. Example: `25`.
 
-#### `task-ipc-mode` (optional)
+#### `task-ipc-mode`
 
 IPC resource namespace to use in the task. If specified, should be one of `host`, `task` or `none`.
 
-#### `task-memory` (optional, integer)
+#### `task-memory` (integer)
 
 Amount of memory (in Mbs) to allocate for the task. Example: `1024` (1Gb).
 
-#### `task-network-mode` (optional)
+#### `task-network-mode`
 
 Docker networking mode for the containers running in the task. If specified, should be one of `bridge`, `host`, `awsvpc` or `none`.
 
-#### `task-pid-mode` (optional)
+#### `task-pid-mode`
 
 Process namespace to use for containers in the task. If specified, should be one of `host` or `task`.
 
-#### `task-role-arn` (optional)
+#### `task-role-arn`
 
 An IAM ECS Task Role to assign to tasks.
+
 Requires the `iam:PassRole` permission for the ARN specified.
 
 ## AWS Roles
@@ -194,8 +157,6 @@ Policy:
     Effect: Allow
     Resource: '*'
 ```
-
-This plugin will create the ECS Service if it does not already exist, which additionally requires the `ecs:CreateService` permission.
 
 ## Developing
 

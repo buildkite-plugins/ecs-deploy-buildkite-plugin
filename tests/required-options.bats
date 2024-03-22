@@ -2,9 +2,6 @@
 
 load "${BATS_PLUGIN_PATH}/load.bash"
 
-# Uncomment to enable stub debug output:
-# export AWS_STUB_DEBUG=/dev/tty
-
 @test "Fail with missing cluster" {
   export BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE=my-service
   export BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY=hello-world
