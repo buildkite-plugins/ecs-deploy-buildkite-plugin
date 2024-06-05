@@ -37,9 +37,9 @@ for DEPRECATED_CONFIG in deployment-config deployment-configuration desired-coun
   fi
 done
 
-aws_default_args=()
+aws_default_args=(--no-paginate)
 if [ -n "${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-}" ]; then
-  aws_default_args+=(--region "${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION} --no-paginate")
+  aws_default_args+=(--region "${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION}")
 fi
 
 task_file=$(mktemp)
