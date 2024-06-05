@@ -39,7 +39,7 @@ done
 
 aws_default_args=()
 if [ -n "${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION:-}" ]; then
-  aws_default_args+=(--region "${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION}")
+  aws_default_args+=(--region "${BUILDKITE_PLUGIN_ECS_DEPLOY_REGION} --no-paginate")
 fi
 
 task_file=$(mktemp)
