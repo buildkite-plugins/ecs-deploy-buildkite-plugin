@@ -142,3 +142,25 @@ setup() {
 
   unstub aws
 }
+
+@test "Remove all but the current task definition" {
+  export BUILDKITE_PLUGIN_ECS_DEPLOY_DEREGISTER_TASKS=true
+
+  stub aws \
+      "ecs describe-task-definition --task-definition hello-world --query 'taskDefinition' : echo '{}'" \
+      "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":2}}'" \
+      "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:2 : echo ok" \
+      "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
+      "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events' --output text : echo ok" \
+      "ecs list-task-definitions --family-prefix hello-world --query 'taskDefinitionArns[]' --output text : echo arn:aws:ecs:region:account:task-definition/hello-world:1" \
+      "ecs deregister-task-definition --task-definition arn:aws:ecs:region:account:task-definition/hello-world:1 : echo De-registering arn:aws:ecs:region:account:task-definition/hello-world:1"
+
+  run "$PWD/hooks/command"
+
+  assert_success
+  assert_output --partial "Service is up 🚀"
+  assert_output --partial "Fetching old task definitions to de-register"
+  assert_output --partial "Deregistering arn:aws:ecs:region:account:task-definition/hello-world:1"
+  
+  unstub aws
+}
