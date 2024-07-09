@@ -96,6 +96,12 @@ Example: `"my-task"`
 
 ### Optional
 
+### `deregister-tasks` (boolean)
+
+Controls if previous task definitions are set to `INACTIVE` after a successful deploy. Default: `false`
+
+Requires the `ecs:DeregisterTaskDefinition` IAM Action
+
 #### `env` (array)
 
 An array of environment variables to add to *every* image's task definition in the `NAME=VALUE` format

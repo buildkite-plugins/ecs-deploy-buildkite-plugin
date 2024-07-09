@@ -10,6 +10,8 @@ configuration:
       type: string
     container-definitions:
       type: string
+    deregister-tasks:
+      type: boolean
     env:
       type: array
     execution-role:

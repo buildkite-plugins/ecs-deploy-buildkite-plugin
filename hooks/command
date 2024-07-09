@@ -156,6 +156,9 @@ if [ -n "${task_compat_reqs}" ]; then
   register_command+=(--requires-compatibilities "${task_compat_reqs}")
 fi
 
+# Task Deregistration Control
+task_deregistration=${BUILDKITE_PLUGIN_ECS_DEPLOY_DEREGISTER_TASKS:-false}
+
 echo "--- :ecs: register command:"
 
 json_output=$("${register_command[@]}")
@@ -185,7 +188,6 @@ aws ecs wait services-stable \
   --cluster "${cluster}" \
   --services "${service_name}" || deploy_exitcode=$?
 
-
 service_events=$(aws ecs describe-services \
   ${aws_default_args[@]+"${aws_default_args[@]}"} \
   --cluster "${cluster}" \
@@ -195,6 +197,10 @@ service_events=$(aws ecs describe-services \
 if [[ $deploy_exitcode -eq 0 ]]; then
   echo "--- :ecs: Service is up 🚀"
   echo "$service_events"
+
+  if [[ "${task_deregistration}" == "true" ]]; then
+    deregister_old_task_definitions "${task_family}" "${task_revision}"
+  fi
 else
   echo "+++ :ecs: Service failed to deploy ❌"
   echo "$service_events"
