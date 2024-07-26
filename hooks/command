@@ -11,6 +11,9 @@ cluster=${BUILDKITE_PLUGIN_ECS_DEPLOY_CLUSTER?Missing cluster}
 task_family=${BUILDKITE_PLUGIN_ECS_DEPLOY_TASK_FAMILY?Missing task family}
 service_name=${BUILDKITE_PLUGIN_ECS_DEPLOY_SERVICE?Missing service name}
 
+# disable AWS CLI V2 client-side pager as this is not executed in an interactive mode
+export AWS_PAGER=""
+
 if ! plugin_read_list_into_result "IMAGE"; then
   echo ":boom: Missing image to use"
   exit 1
