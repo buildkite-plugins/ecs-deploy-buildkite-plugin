@@ -53,3 +53,33 @@ function prefix_read_list_into_result() {
 function plugin_read_list_into_result() {
   prefix_read_list_into_result "BUILDKITE_PLUGIN_${PLUGIN_PREFIX}_${1}"
 }
+
+# Deregisters task definitions that are not the current one
+deregister_old_task_definitions() {
+  local task_family=$1
+  local task_revision=$2
+
+  echo "--- :ecs: Fetching old task definitions to de-register"
+  echo "$task_family"
+  # Fetch all `ACTIVE` task definitions for the family
+  all_active_task_defs=$(aws ecs list-task-definitions \
+    --family-prefix "${task_family}" \
+    --query 'taskDefinitionArns[]' \
+    --output text)
+
+  # Array
+  readarray -t active_task_defs <<<"$all_active_task_defs"
+
+  # Remove the current task definition from the list
+  for i in "${!active_task_defs[@]}"; do
+    if [[ "${active_task_defs[$i]}" == *":${task_revision}"* ]]; then
+      unset 'active_task_defs[$i]'
+    fi
+  done
+
+  # De-register the old task definitions
+  for task_def in "${active_task_defs[@]}"; do
+    echo "Deregistering $task_def"
+    aws ecs deregister-task-definition --task-definition "$task_def"
+  done
+}
