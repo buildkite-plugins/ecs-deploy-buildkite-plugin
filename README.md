@@ -152,6 +152,7 @@ Policy:
   - Action:
     - ecr:DescribeImages
     - ecs:DescribeServices
+    - ecs:DescribeTaskDefinition
     - ecs:RegisterTaskDefinition
     - ecs:UpdateService
     Effect: Allow
