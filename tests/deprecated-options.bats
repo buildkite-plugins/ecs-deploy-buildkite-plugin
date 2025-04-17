@@ -59,3 +59,4 @@ setup() {
 
   unstub aws
 }
+
