@@ -173,6 +173,7 @@ fi
 task_revision=$(jq '.taskDefinition.revision' <<< "$json_output")
 echo "Registered ${task_family}:${task_revision}"
 
+update_time=$(date -u +%Y-%m-%dT%H:%M:%S)
 echo "--- :ecs: Updating service for ${service_name}"
 aws ecs update-service \
   ${aws_default_args[@]+"${aws_default_args[@]}"} \
@@ -188,12 +189,14 @@ aws ecs wait services-stable \
   --cluster "${cluster}" \
   --services "${service_name}" || deploy_exitcode=$?
 
-
+## Get events since the time when we began the update, in ascending order
 service_events=$(aws ecs describe-services \
   ${aws_default_args[@]+"${aws_default_args[@]}"} \
   --cluster "${cluster}" \
   --services "${service_name}" \
-  --query 'services[].events' --output text)
+  --query "services[].events[]" |
+  jq "[.[] | select(.createdAt > \"${update_time}\")] | sort_by(.createdAt)" |
+  jq -r '.[] | "\(.createdAt)\t\(.id)\t\(.message)"')
 
 if [[ $deploy_exitcode -eq 0 ]]; then
   echo "--- :ecs: Service is up 🚀"
