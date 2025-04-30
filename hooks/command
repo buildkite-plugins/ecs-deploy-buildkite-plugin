@@ -195,9 +195,7 @@ service_events=$(aws ecs describe-services \
   ${aws_default_args[@]+"${aws_default_args[@]}"} \
   --cluster "${cluster}" \
   --services "${service_name}" \
-  --query "services[].events[]" |
-  jq "[.[] | select(.createdAt > \"${update_time}\")] | sort_by(.createdAt)" |
-  jq -r '.[] | "\(.createdAt)\t\(.id)\t\(.message)"')
+  --query "services[].events[?createdAt >= '${update_time}']" --output text | sort)
 
 if [[ $deploy_exitcode -eq 0 ]]; then
   echo "--- :ecs: Service is up 🚀"
