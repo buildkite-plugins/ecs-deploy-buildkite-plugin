@@ -19,7 +19,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events[]' : echo '[]'"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -39,7 +39,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events[]' : echo '[]'"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -63,7 +63,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* : echo \"\$6\" > ${_TMP_DIR}/container_definition ; echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events[]' : echo '[]'"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -90,7 +90,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* --task-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events[]' : echo '[]'"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -108,7 +108,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* --execution-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events[]' : echo '[]'"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 

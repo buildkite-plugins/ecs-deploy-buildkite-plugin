@@ -20,7 +20,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events[]' : echo '[]'"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -43,7 +43,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_multiple_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events[]' : echo '[]'"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -68,7 +68,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* : echo \"\$6\" > ${_TMP_DIR}/container_definition ; echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events[]' : echo '[]'"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -95,7 +95,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* --task-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events[]' : echo '[]'"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -113,7 +113,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* --execution-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events[]' : echo '[{\"id\": \"9\", \"createdAt\": \"2025-04-17T12:34:56.789000+00:00\", \"message\": \"ok\" }]'"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -131,7 +131,7 @@ setup() {
     "ecs register-task-definition --region custom-region --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --region custom-region --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --region custom-region --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --region custom-region --cluster my-cluster --services my-service --query 'services[].events[]' : echo '[]'"
+    "ecs describe-services --region custom-region --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -139,4 +139,23 @@ setup() {
   assert_output --partial "Service is up 🚀"
 
   unstub aws
+}
+
+@test "Filters past events and sorts them" {
+  current_date="2024-05-04T12:34:56.789000+08:00"
+  stub date "+'%Y-%m-%dT%H:%M:%S' : echo $current_date"
+  stub aws \
+    "ecs describe-task-definition \* \* \* \* : echo '{}'" \
+    "ecs register-task-definition \* \* \* \* : echo '{}'" \
+    "ecs update-service \* \* \* \* \* \* : echo ok" \
+    "ecs wait services-stable \* \* \* \* : echo ok" \
+    "ecs describe-services \* \* \* \* --query \"services[].events[?createdAt >= '$current_date']\" --output text : echo '2019-12-12T00:00:01.000Z\tnope\n$current_date\tok'"
+
+  run "$PWD/hooks/command"
+
+  assert_success
+  assert_output --partial "ok"
+
+  unstub aws
+  unstub date
 }
