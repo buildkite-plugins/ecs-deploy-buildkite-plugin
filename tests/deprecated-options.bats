@@ -45,7 +45,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events' --output text : echo ok"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 

@@ -20,7 +20,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events' --output text : echo ok"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -43,7 +43,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions $'$expected_multiple_container_definition' : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events' --output text : echo ok"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -61,7 +61,6 @@ setup() {
   export BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_0="FOO=bar"
   export BUILDKITE_PLUGIN_ECS_DEPLOY_ENV_1="BAZ=bing"
 
-
   # first command stubbed saves the container definition to ${TMP_DIR}/container_definition for later review and manipulation
   # we should be stubbing a lot more calls, but we don't care about those so let the stubbing fail
   stub aws \
@@ -69,20 +68,20 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* : echo \"\$6\" > ${_TMP_DIR}/container_definition ; echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events' --output text : echo ok"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
   assert_success
 
   # check that the definition was updated accordingly
-  assert_equal "$(jq -r '.[0].environment[0].name'  "${_TMP_DIR}"/container_definition)" 'FOO'
+  assert_equal "$(jq -r '.[0].environment[0].name' "${_TMP_DIR}"/container_definition)" 'FOO'
   assert_equal "$(jq -r '.[0].environment[0].value' "${_TMP_DIR}"/container_definition)" 'bar'
-  assert_equal "$(jq -r '.[1].environment[0].name'  "${_TMP_DIR}"/container_definition)" 'FOO'
+  assert_equal "$(jq -r '.[1].environment[0].name' "${_TMP_DIR}"/container_definition)" 'FOO'
   assert_equal "$(jq -r '.[1].environment[0].value' "${_TMP_DIR}"/container_definition)" 'bar'
-  assert_equal "$(jq -r '.[0].environment[1].name'  "${_TMP_DIR}"/container_definition)" 'BAZ'
+  assert_equal "$(jq -r '.[0].environment[1].name' "${_TMP_DIR}"/container_definition)" 'BAZ'
   assert_equal "$(jq -r '.[0].environment[1].value' "${_TMP_DIR}"/container_definition)" 'bing'
-  assert_equal "$(jq -r '.[1].environment[1].name'  "${_TMP_DIR}"/container_definition)" 'BAZ'
+  assert_equal "$(jq -r '.[1].environment[1].name' "${_TMP_DIR}"/container_definition)" 'BAZ'
   assert_equal "$(jq -r '.[1].environment[1].value' "${_TMP_DIR}"/container_definition)" 'bing'
 
   unstub aws
@@ -96,7 +95,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* --task-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events' --output text : echo ok"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -114,7 +113,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* --execution-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events' --output text : echo ok"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -124,7 +123,6 @@ setup() {
   unstub aws
 }
 
-
 @test "Region parameter is applied to all AWS calls" {
   export BUILDKITE_PLUGIN_ECS_DEPLOY_REGION=custom-region
 
@@ -133,7 +131,7 @@ setup() {
     "ecs register-task-definition --region custom-region --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --region custom-region --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --region custom-region --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --region custom-region --cluster my-cluster --services my-service --query 'services[].events' --output text : echo ok"
+    "ecs describe-services --region custom-region --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -141,4 +139,23 @@ setup() {
   assert_output --partial "Service is up 🚀"
 
   unstub aws
+}
+
+@test "Filters past events and sorts them" {
+  current_date="2024-05-04T12:34:56.789000+08:00"
+  stub date "+'%Y-%m-%dT%H:%M:%S' : echo $current_date"
+  stub aws \
+    "ecs describe-task-definition \* \* \* \* : echo '{}'" \
+    "ecs register-task-definition \* \* \* \* : echo '{}'" \
+    "ecs update-service \* \* \* \* \* \* : echo ok" \
+    "ecs wait services-stable \* \* \* \* : echo ok" \
+    "ecs describe-services \* \* \* \* --query \"services[].events[?createdAt >= '$current_date']\" --output text : echo '2019-12-12T00:00:01.000Z\tnope\n$current_date\tok'"
+
+  run "$PWD/hooks/command"
+
+  assert_success
+  assert_output --partial "ok"
+
+  unstub aws
+  unstub date
 }

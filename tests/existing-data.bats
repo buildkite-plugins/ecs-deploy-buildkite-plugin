@@ -19,7 +19,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events' --output text : echo ok"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -39,7 +39,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events' --output text : echo ok"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -63,20 +63,20 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* : echo \"\$6\" > ${_TMP_DIR}/container_definition ; echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events' --output text : echo ok"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
   assert_success
 
   # check that the definition was updated accordingly
-  assert_equal "$(jq -r '.[0].environment[0].name'  "${_TMP_DIR}"/container_definition)" 'FOO'
+  assert_equal "$(jq -r '.[0].environment[0].name' "${_TMP_DIR}"/container_definition)" 'FOO'
   assert_equal "$(jq -r '.[0].environment[0].value' "${_TMP_DIR}"/container_definition)" 'bar'
-  assert_equal "$(jq -r '.[1].environment[0].name'  "${_TMP_DIR}"/container_definition)" 'FOO'
+  assert_equal "$(jq -r '.[1].environment[0].name' "${_TMP_DIR}"/container_definition)" 'FOO'
   assert_equal "$(jq -r '.[1].environment[0].value' "${_TMP_DIR}"/container_definition)" 'bar'
-  assert_equal "$(jq -r '.[0].environment[1].name'  "${_TMP_DIR}"/container_definition)" 'BAZ'
+  assert_equal "$(jq -r '.[0].environment[1].name' "${_TMP_DIR}"/container_definition)" 'BAZ'
   assert_equal "$(jq -r '.[0].environment[1].value' "${_TMP_DIR}"/container_definition)" 'bing'
-  assert_equal "$(jq -r '.[1].environment[1].name'  "${_TMP_DIR}"/container_definition)" 'BAZ'
+  assert_equal "$(jq -r '.[1].environment[1].name' "${_TMP_DIR}"/container_definition)" 'BAZ'
   assert_equal "$(jq -r '.[1].environment[1].value' "${_TMP_DIR}"/container_definition)" 'bing'
 
   unstub aws
@@ -90,7 +90,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* --task-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events' --output text : echo ok"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -108,7 +108,7 @@ setup() {
     "ecs register-task-definition --family hello-world --container-definitions \* --execution-role-arn arn:aws:iam::012345678910:role/world : echo '{\"taskDefinition\":{\"revision\":1}}'" \
     "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
     "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
-    "ecs describe-services --cluster my-cluster --services my-service --query 'services[].events' --output text : echo ok"
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
 
   run "$PWD/hooks/command"
 
@@ -119,15 +119,15 @@ setup() {
 }
 
 @test "Run a deploy when the container definition is incorrect" {
-  
+
   stub aws \
     "ecs describe-task-definition --task-definition hello-world --query taskDefinition : echo '{}'"
 
   run "$PWD/hooks/command"
-  
+
   assert_failure
   assert_output --partial 'Invalid container definition (should be in the format of [{"image": "..."}] )'
-  
+
   unstub aws
 }
 
