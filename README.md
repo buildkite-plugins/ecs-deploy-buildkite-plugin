@@ -159,6 +159,16 @@ Policy:
     Resource: '*'
 ```
 
+## Compatibility
+
+| Elastic Stack | Agent Stack K8s | Hosted (Mac) | Hosted (Linux) | Notes |
+| :-----------: | :-------------: | :----: | :----: |:---- |
+| ✅ | ⚠️ | ⚠️ | ⚠️ | *K8s stack* requires additional sidecars to support `aws`, depending on image may require `jq`<br/> Hosted agents must have `aws`, `jq` installed and AWS credentials available |
+
+- ✅ Fully supported (all combinations of attributes have been tested to pass)
+- ⚠️ Partially supported (some combinations cause errors/issues)
+- ❌ Not supported
+
 ## Developing
 
 To run testing, shellchecks and plugin linting use use `bk run` with the [Buildkite CLI](https://github.com/buildkite/cli).
