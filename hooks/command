@@ -212,6 +212,24 @@ aws ecs wait services-stable \
   --cluster "${cluster}" \
   --services "${service_name}" || deploy_exitcode=$?
 
+echo "--- Verifying service is running expected task definition"
+
+expected_task=$(aws ecs describe-task-definition \
+  --task-definition "${task_family}:${task_revision}" \
+  --query 'taskDefinition.taskDefinitionArn' \
+  --output text)
+
+current_task=$(aws ecs describe-services \
+  --cluster "${cluster}" \
+  --services "${service_name}" \
+  --query 'services[0].deployments[?status==`PRIMARY`].taskDefinition' \
+  --output text)
+
+if [[ "$current_task" != "$expected_task" ]]; then
+  echo "+++ ❗⚠️ Deployment rolled back: expected task definition ${expected_task} but service is using ${current_task}  ✅️"
+  echo "+++ ❗⚠️ Check ECS events above for root cause (e.g., task failed to start, insufficient capacity)"
+  exit 1
+fi
 
 service_events=$(aws ecs describe-services \
   --cluster "${cluster}" \
