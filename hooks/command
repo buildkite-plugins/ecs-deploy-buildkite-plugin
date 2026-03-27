@@ -159,6 +159,11 @@ if [ -n "${task_compat_reqs}" ]; then
   register_command+=(--requires-compatibilities "${task_compat_reqs}")
 fi
 
+task_runtime_platform=$(jq -r '.runtimePlatform // ""' "${task_file}")
+if [ -n "${task_runtime_platform}" ]; then
+  register_command+=(--runtime-platform "${task_runtime_platform}")
+fi
+
 echo "--- :ecs: register command:"
 
 json_output=$("${register_command[@]}")
