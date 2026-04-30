@@ -142,6 +142,15 @@ An IAM ECS Task Role to assign to tasks.
 
 Requires the `iam:PassRole` permission for the ARN specified.
 
+### Fields inherited from the existing task definition
+
+The following fields are automatically carried over from the latest active task definition and forwarded to `register-task-definition`. They are never reset to AWS defaults on deploy:
+
+- `volumes` — task volumes
+- `placementConstraints` — task placement constraints
+- `requiresCompatibilities` — launch type requirements (e.g. `FARGATE`)
+- `runtimePlatform` — CPU architecture and OS family; particularly important for ARM64/Graviton Fargate services, where omitting it causes AWS to silently revert `cpuArchitecture` to `X86_64` on every deploy
+
 ## AWS Roles
 
 At a minimum this plugin requires the following AWS permissions to be granted to the agent running this step:
