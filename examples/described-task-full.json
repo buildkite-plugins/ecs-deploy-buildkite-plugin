@@ -26,5 +26,9 @@
     "FARGATE"
   ],
   "cpu": "10",
-  "memory": "100"
+  "memory": "100",
+  "runtimePlatform": {
+    "cpuArchitecture": "ARM64",
+    "operatingSystemFamily": "LINUX"
+  }
 }

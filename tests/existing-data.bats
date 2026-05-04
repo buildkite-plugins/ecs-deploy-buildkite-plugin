@@ -141,3 +141,20 @@ setup() {
 
   unstub aws
 }
+
+@test "Run a deploy preserving runtimePlatform from existing task definition" {
+
+  stub aws \
+    "ecs describe-task-definition --task-definition hello-world --query taskDefinition : cat examples/described-task-full.json" \
+    "ecs register-task-definition --family hello-world --container-definitions \* --execution-role-arn ExecutionRoleARN --cpu 10 --memory 100 --network-mode awsvpc --task-role-arn RoleARN --volumes \* --runtime-platform \* : echo '{\"taskDefinition\":{\"revision\":1}}'" \
+    "ecs update-service --cluster my-cluster --service my-service --task-definition hello-world:1 : echo ok" \
+    "ecs wait services-stable --cluster my-cluster --services my-service : echo ok" \
+    "ecs describe-services --cluster my-cluster --services my-service --query \* --output text : echo ok"
+
+  run "$PWD/hooks/command"
+
+  assert_success
+  assert_output --partial "Service is up 🚀"
+
+  unstub aws
+}
